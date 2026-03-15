@@ -6,216 +6,70 @@
   <title>Spite – Durban Rules (Landscape)</title>
  <style>
   body {
-    font-family: system-ui, -apple-system, BlinkMacOSystemFont, sans-serif;
+    font-family: system-ui, sans-serif;
     background: #0a211b;
     color: #fff;
     margin: 0;
-    padding: 6px;
+    padding: 8px;
     min-height: 100vh;
-    touch-action: manipulation;
-  }
-
-  h1 {
-    font-size: 1.7rem;
-    margin: 6px 0 8px;
-    color: #ffcc00;
-    text-align: center;
-  }
-
-  #status {
-    font-size: 1.15rem;
-    margin: 4px 0 10px;
-    text-align: center;
-    font-weight: bold;
-  }
-
-  .main-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto;
-    gap: 10px;
-  }
-
-  /* ────────────────────────────────────────────────
-     Landscape / wide screen layout
-  ──────────────────────────────────────────────── */
-  @media (min-width: 820px) {
-    .main-container {
-      flex-direction: column;
-    }
-
-    .top-section {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
-      padding: 0 12px;
-    }
-
-    .payoff-area {
-      flex: 0 0 120px;
-      text-align: center;
-    }
-
-    .payoff-area h3 {
-      font-size: 0.95rem;
-      margin: 4px 0 6px;
-    }
-
-    .center-area {
-      flex: 1;
-      text-align: center;
-    }
-
-    .center-area h3 {
-      margin: 4px 0 8px;
-      font-size: 1.05rem;
-    }
-
-    .bottom-section {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 0 12px;
-    }
-
-    #player-hand {
-      display: flex;
-      flex-wrap: nowrap;
-      justify-content: center;
-      gap: 10px;
-      overflow-x: auto;
-      padding: 8px 0;
-      background: rgba(255,255,255,0.05);
-      border-radius: 8px;
-    }
-
-    #player-hand .card {
-      width: 88px;
-      height: 124px;
-      font-size: 25px;
-      flex: 0 0 88px;
-    }
-
-    .side-stacks {
-      display: flex;
-      flex-wrap: nowrap;
-      justify-content: center;
-      gap: 16px;
-      overflow-x: auto;
-      padding: 6px 0;
-    }
-
-    .stacked-pile {
-      width: 88px;
-      height: 200px;
-      flex: 0 0 88px;
-    }
-
-    .stacked-pile .card,
-    .pile {
-      width: 88px;
-      height: 124px;
-    }
-  }
-
-  /* ────────────────────────────────────────────────
-     Portrait / narrow fallback (what you currently see)
-  ──────────────────────────────────────────────── */
-  @media (max-width: 819px) {
-    .top-section {
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .center-area {
-      width: 100%;
-    }
-
-    #player-hand .card,
-    .stacked-pile,
-    .pile {
-      width: 78px;
-      height: 112px;
-      font-size: 22px;
-    }
-
-    .stacked-pile {
-      height: 185px;
-    }
-
-    #player-hand,
-    .side-stacks {
-      gap: 8px;
-      padding: 6px 0;
-    }
-  }
-
-  /* Common card styles */
-  .card {
-    border-radius: 9px;
-    border: 2px solid #555;
-    background: #fff;
-    color: #000;
-    display: flex;
     align-items: center;
+    touch-action: manipulation;
+  }
+  h1 { font-size: 1.8rem; margin: 8px 0 10px; color: #ffcc00; text-align: center; }
+  #status { font-size: 1.2rem; margin: 8px 0 12px; text-align: center; min-height: 1.6em; font-weight: bold; }
+  .section { width: 100%; max-width: 440px; margin: 10px 0; }
+  h3 { margin: 6px 0 8px; text-align: center; font-size: 1.15rem; }
+  .cards { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  #player-hand {
+    display: flex;
+    flex-wrap: nowrap;
     justify-content: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.65);
-    user-select: none;
-    transition: all 0.14s;
+    gap: 10px;
+    width: 100%;
+    overflow-x: auto;
+    padding: 8px 0;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+  }
+  #player-sides {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  }
+  .stacked-pile {
+    position: relative;
+    width: 92px;
+    height: 220px;
+  }
+  .pile {
+    width: 92px;
+    height: 130px;
+    position: relative;
+    margin: 0 auto;
+  }
+  .card {
+    width: 92px; height: 130px; border-radius: 10px; border: 3px solid #555;
+    background: #fff; color: #000; font-size: 26px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    user-select: none; transition: all 0.14s;
     position: absolute;
     left: 0;
   }
-
-  .card:active {
-    transform: scale(1.10);
-    z-index: 10;
-  }
-
+  .card:active { transform: scale(1.12); z-index: 10; }
   .card.red { color: #c00; }
   .card.black { color: #111; }
-  .card.back {
-    background: linear-gradient(135deg, #003366, #0066cc);
-    color: white;
-    font-size: 44px;
-  }
-  .card.empty {
-    background: #334;
-    color: #aaa;
-    font-size: 14px;
-    border-color: #555;
-  }
-
-  .highlight {
-    border-color: #ff0 !important;
-    box-shadow: 0 0 24px #ff0 !important;
-    transform: scale(1.09) !important;
-    background: #fffa !important;
-  }
-
-  .start-highlight .card.empty {
-    background: #0f0 !important;
-    color: black !important;
-    border-color: #0f0 !important;
-    box-shadow: 0 0 28px #0f0 !important;
-  }
-
+  .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 48px; }
+  .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; }
+  .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
+  .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
   button {
-    width: 100%;
-    max-width: 340px;
-    margin: 12px auto;
-    padding: 12px;
-    font-size: 1.3rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    background: #ff6600;
-    color: white;
-    cursor: pointer;
+    width: 100%; max-width: 360px; margin: 16px auto; padding: 14px;
+    font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
+    background: #ff6600; color: white;
   }
 </style>
 </head>
@@ -225,39 +79,33 @@
   <h1>Spite – Durban Rules</h1>
   <div id="status">Ready...</div>
 
-  <!-- Add this wrapper -->
-  <div class="top-section">
-    <div class="payoff-area">
-      <h3>Opponent left: <span id="ai-payoff">13</span></h3>
-      <div id="ai-payoff-pile" class="pile"></div>
-    </div>
-
-    <div class="center-area">
-      <h3>Center Piles (A→Q • Kings wild → become next rank)</h3>
-      <div id="centers" class="cards"></div>
-    </div>
-
-    <div class="payoff-area">
-      <h3>Your Payoff: <span id="player-payoff">13</span> left (tap to play)</h3>
-      <div id="player-payoff-pile" class="pile"></div>
-    </div>
+  <div class="section">
+    <h3>Opponent: <span id="ai-payoff">13</span> left</h3>
+    <div id="ai-payoff-pile" class="pile"></div>
   </div>
 
-  <div class="bottom-section">
-    <div class="hand-row">
-      <h3>Your Hand</h3>
-      <div id="player-hand"></div>
-    </div>
-
-    <div class="sides-row">
-      <h3>Your Side Stacks (tap hand → tap stack to END turn)</h3>
-      <div id="player-sides" class="side-stacks"></div>
-    </div>
-
-    <button id="new-game">New Game</button>
+  <div class="section">
+    <h3>Center Piles (A→Q • Kings wild → become next rank)</h3>
+    <div id="centers" class="cards"></div>
   </div>
+
+  <div class="section">
+    <h3>Your Payoff: <span id="player-payoff">13</span> left (tap top to play)</h3>
+    <div id="player-payoff-pile" class="pile"></div>
+  </div>
+
+  <div class="section">
+    <h3>Your Hand</h3>
+    <div id="player-hand"></div>
+  </div>
+
+  <div class="section">
+    <h3>Your Side Stacks (tap hand card → tap any stack to END turn)</h3>
+    <div id="player-sides" class="side-stacks"></div>
+  </div>
+
+  <button id="new-game">New Game</button>
 </div>
-
 <script>
 var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 var SUITS = ['♥','♦','♣','♠'];
