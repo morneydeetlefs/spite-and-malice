@@ -342,6 +342,7 @@ function selectCard(type, idx) {
 }
 
 function discardToSide(sideIdx) {
+  console.log("playerHand state:", playerHand.map(c => c ? cardDisplay(c) : "INVALID"));
   if (currentPlayer !== "player" || !selected || !selected.startsWith("hand-")) return;
   var handIdx = parseInt(selected.split('-')[1]);
   var card = playerHand[handIdx];
@@ -355,6 +356,7 @@ function discardToSide(sideIdx) {
 }
 
 function tryPlayToCenter(i) {
+  console.log("playerHand state:", playerHand.map(c => c ? cardDisplay(c) : "INVALID"));
   if (currentPlayer !== "player" || !selected) return;
 
   var card, sourceType, sourceIdx;
@@ -404,6 +406,7 @@ function tryPlayToCenter(i) {
 }
 
 function endPlayerTurn() {
+  console.log("playerHand state:", playerHand.map(c => c ? cardDisplay(c) : "INVALID"));
   while (playerHand.length < 5 && stock.length > 0) playerHand.push(stock.shift());
   selected = null;
   updateUI();
@@ -516,6 +519,7 @@ function startGame() {
   centers = [[],[],[],[]];
   selected = null;
   currentPlayer = playerHand.some(canStartCenter) ? "player" : "ai";
+  console.log("playerHand state:", playerHand.map(c => c ? cardDisplay(c) : "INVALID"));
   updateUI();
   setStatus(currentPlayer === "player" ? "Your turn – tap payoff, hand or side" : "AI starts...");
   if (currentPlayer === "ai") setTimeout(aiTurn, 800);
