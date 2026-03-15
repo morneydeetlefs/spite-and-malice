@@ -23,17 +23,22 @@
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
     .hand-cards { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-    .side-stacks { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .side-stacks { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 16px; 
+      justify-content: center; 
+    }
     .pile { 
       width: 92px; 
       height: 130px; 
       position: relative; 
-      margin: 10px 0; 
     }
     .stacked-pile {
       position: relative;
       width: 92px;
-      min-height: 130px;
+      height: 220px;          /* enough height for fanned cards */
+      margin: 10px 0;
     }
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
@@ -42,7 +47,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
       position: absolute;
-      top: 0; left: 0;
+      left: 0;
     }
     .card:active { transform: scale(1.15); }
     .card.red { color: #c00; }
@@ -185,7 +190,7 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks – now vertical, fanned downward to show full stack
+    // Side Stacks – horizontal layout, fanned downward with top card at bottom
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var isDiscardMode = selected && selected.startsWith("hand-");
     for (var i = 0; i < 4; i++) {
@@ -197,17 +202,18 @@
         var empty = document.createElement("div");
         empty.className = "card empty";
         empty.textContent = "-";
+        empty.style.top = "0px";
         stackEl.appendChild(empty);
       } else {
-        // Fan cards downward – top card on top
+        // Fan downward: index 0 (oldest) at top, index length-1 (newest/top card) at bottom
         for (var k = 0; k < pile.length; k++) {
           var c = pile[k];
           var cardEl = document.createElement("div");
           cardEl.className = "card " + c.color;
           cardEl.textContent = cardDisplay(c);
-          cardEl.style.top = (k * 20) + "px";           // offset each card down
-          cardEl.style.zIndex = pile.length - k;        // top card highest z-index
-          if (k === pile.length - 1) {                  // only top card clickable/selectable
+          cardEl.style.top = (k * 18) + "px";          // smaller offset = tighter fan
+          cardEl.style.zIndex = pile.length - k;       // newer cards (higher k) on top
+          if (k === pile.length - 1) {                 // only newest/top card is interactive
             if (!isDiscardMode) {
               cardEl.onclick = (function(idx){ return function(){ selectCard("side", idx); }; })(i);
             }
