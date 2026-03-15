@@ -7,7 +7,7 @@
  <style>
   <style>
   body {
-    font-family: system-ui, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     background: #0a211b;
     color: #fff;
     margin: 0;
@@ -43,7 +43,7 @@
   h3 {
     margin: 6px 0 8px;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
   }
 
   .cards {
@@ -53,7 +53,7 @@
     justify-content: center;
   }
 
-  /* Hand – horizontal row, scrollable, visible box */
+  /* Hand container */
   #player-hand {
     display: flex;
     flex-direction: row;
@@ -70,6 +70,7 @@
     box-sizing: border-box;
   }
 
+  /* Hand cards – normal flow, no absolute */
   #player-hand .card {
     position: static;
     flex: 0 0 92px;
@@ -89,7 +90,7 @@
     transition: all 0.14s;
   }
 
-  /* Side stacks – fanned downward */
+  /* Side stacks container */
   #player-sides {
     display: flex;
     flex-wrap: wrap;
@@ -97,6 +98,7 @@
     justify-content: center;
   }
 
+  /* Side stack pile – fan effect */
   .stacked-pile {
     position: relative;
     width: 92px;
@@ -123,7 +125,7 @@
     user-select: none;
   }
 
-  /* Single-card piles (centers, payoffs) – normal flow */
+  /* Single-card piles (centers, payoffs, opponent) */
   .pile {
     width: 92px;
     height: 130px;
@@ -131,8 +133,7 @@
     margin: 0 auto;
   }
 
-  .pile .card,
-  .card:not(.stacked-pile .card) {
+  .pile .card {
     position: relative;
     top: 0;
     left: 0;
@@ -150,13 +151,18 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.6);
   }
 
+  /* Card color classes */
   .card.red { color: #c00; }
   .card.black { color: #111; }
+
+  /* Back of card (payoff piles) */
   .card.back {
     background: linear-gradient(135deg, #003366, #0066cc);
     color: white;
     font-size: 48px;
   }
+
+  /* Empty pile placeholder */
   .card.empty {
     background: #334;
     color: #aaa;
@@ -164,6 +170,7 @@
     border-color: #555;
   }
 
+  /* Highlights */
   .highlight {
     border-color: #ff0 !important;
     box-shadow: 0 0 25px #ff0 !important;
@@ -178,6 +185,7 @@
     box-shadow: 0 0 30px #0f0 !important;
   }
 
+  /* New Game button */
   button {
     width: 100%;
     max-width: 380px;
@@ -189,6 +197,7 @@
     border-radius: 12px;
     background: #ff6600;
     color: white;
+    cursor: pointer;
   }
 </style>
 </head>
