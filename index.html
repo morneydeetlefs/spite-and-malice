@@ -227,21 +227,32 @@ function updateUI() {
     centersDiv.appendChild(pileEl);
   }
 
-  var handDiv = document.getElementById("player-hand");
-  handDiv.innerHTML = '';
-  for (var i = 0; i < playerHand.length; i++) {
-    var c = playerHand[i];
-    var cd = document.createElement("div");
-    cd.className = "card " + c.color;
-    cd.textContent = cardDisplay(c);
-    cd.onclick = (function(idx) {
-      return function() {
-        selectCard("hand", idx);
-      };
-    })(i);
-    if (selected === "hand-" + i) cd.classList.add("highlight");
-    handDiv.appendChild(cd);
-  }
+ // Update player's hand
+const handDiv = document.getElementById("player-hand");
+if (handDiv) {
+    console.log("Hand: rendering " + playerHand.length + " cards");
+
+    handDiv.innerHTML = '';
+
+    for (let i = 0; i < playerHand.length; i++) {
+        const c = playerHand[i];
+        if (!c) {
+            console.warn("Skipping invalid card at index " + i);
+            continue;
+        }
+
+        console.log("Card " + i + ": " + cardDisplay(c));
+
+        const cd = document.createElement("div");
+        cd.className = "card " + c.color;
+        cd.textContent = cardDisplay(c);
+        cd.onclick = (function(idx) {
+            return function() { selectCard("hand", idx); };
+        })(i);
+        if (selected === "hand-" + i) cd.classList.add("highlight");
+        handDiv.appendChild(cd);
+    }
+}
 
   var sidesDiv = document.getElementById("player-sides");
   sidesDiv.innerHTML = '';
