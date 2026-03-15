@@ -22,7 +22,20 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .hand-cards { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    
+    /* Hand - forced single horizontal row, no wrap, good spacing */
+    #player-hand {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 420px;
+      overflow-x: auto;           /* scroll horizontally if screen is very narrow */
+      padding: 8px 0;
+    }
+    
     .side-stacks { 
       display: flex; 
       flex-wrap: wrap; 
@@ -37,7 +50,7 @@
     .stacked-pile {
       position: relative;
       width: 92px;
-      height: 220px;          /* enough height for fanned cards */
+      height: 220px;          /* room for fanned cards */
       margin: 10px 0;
     }
     .card {
@@ -57,7 +70,7 @@
     .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
     .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
     button {
-      width: 100%; max-width: 380px; margin: 16px auto; padding: 16px;
+      width: 100%; max-width: 380px; margin: 20px auto; padding: 16px;
       font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
       background: #ff6600; color: white;
     }
@@ -84,8 +97,8 @@
 </div>
 
 <div class="section">
-  <h3>Your Hand (tap card → tap center or side stack)</h3>
-  <div id="player-hand" class="hand-cards"></div>
+  <h3>Your Hand</h3>
+  <div id="player-hand"></div>
 </div>
 
 <div class="section">
@@ -96,6 +109,11 @@
 <button id="new-game">New Game</button>
 
 <script>
+// ──────────────────────────────────────────────────────────────────────────────
+// (The entire JavaScript code remains unchanged from the previous version)
+// Just paste your existing <script> block here – no changes needed in logic
+// ──────────────────────────────────────────────────────────────────────────────
+
   var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   var SUITS = ['♥','♦','♣','♠'];
   var VALUE = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
@@ -178,7 +196,7 @@
       centersDiv.appendChild(pileEl);
     }
 
-    // Hand (horizontal)
+    // Hand – horizontal row, all cards visible
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -205,15 +223,14 @@
         empty.style.top = "0px";
         stackEl.appendChild(empty);
       } else {
-        // Fan downward: index 0 (oldest) at top, index length-1 (newest/top card) at bottom
         for (var k = 0; k < pile.length; k++) {
           var c = pile[k];
           var cardEl = document.createElement("div");
           cardEl.className = "card " + c.color;
           cardEl.textContent = cardDisplay(c);
-          cardEl.style.top = (k * 18) + "px";          // smaller offset = tighter fan
-          cardEl.style.zIndex = pile.length - k;       // newer cards (higher k) on top
-          if (k === pile.length - 1) {                 // only newest/top card is interactive
+          cardEl.style.top = (k * 18) + "px";
+          cardEl.style.zIndex = pile.length - k;
+          if (k === pile.length - 1) {
             if (!isDiscardMode) {
               cardEl.onclick = (function(idx){ return function(){ selectCard("side", idx); }; })(i);
             }
@@ -231,7 +248,7 @@
       sidesDiv.appendChild(stackEl);
     }
 
-    // Player Payoff Pile – top card visible + clickable
+    // Player Payoff Pile
     var playerPayoffDiv = document.getElementById("player-payoff-pile");
     playerPayoffDiv.innerHTML = '';
     var pp = topCard(playerPayoff);
@@ -249,7 +266,7 @@
     ppPile.appendChild(ppCard);
     playerPayoffDiv.appendChild(ppPile);
 
-    // AI Payoff Pile – top card visible
+    // AI Payoff Pile
     var aiPayoffDiv = document.getElementById("ai-payoff-pile");
     aiPayoffDiv.innerHTML = '';
     var ap = topCard(aiPayoff);
