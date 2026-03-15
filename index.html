@@ -34,7 +34,7 @@
     max-width: 100%;
     overflow-x: auto;
     padding: 12px 0;
-    min-height: 140px;              /* force height so cards can't collapse */
+    min-height: 150px;              /* force height so cards can't collapse */
     background: rgba(255,255,255,0.05);
     border-radius: 10px;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
@@ -124,8 +124,9 @@ function createDeck() {
   for (var i = 0; i < 2; i++) {
     for (var s = 0; s < SUITS.length; s++) {
       for (var r = 0; r < RANKS.length; r++) {
-        var suit = SUITS[s], rank = RANKS[r];
-        deck.push({rank:rank, suit:suit, color:(suit==='♥'||suit==='♦')?'red':'black'});
+        var suit = SUITS[s];
+        var rank = RANKS[r];
+        deck.push({rank: rank, suit: suit, color: (suit === '♥' || suit === '♦') ? 'red' : 'black'});
       }
     }
   }
@@ -135,18 +136,25 @@ function createDeck() {
 function shuffle(arr) {
   for (var i = arr.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
-    var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
+    var temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
   }
   return arr;
 }
 
-function topCard(pile) { return pile.length > 0 ? pile[pile.length-1] : null; }
-function canStartCenter(c) { return c && (c.rank === 'A' || c.rank === 'K'); }
+function topCard(pile) {
+  return pile.length > 0 ? pile[pile.length - 1] : null;
+}
+
+function canStartCenter(c) {
+  return c && (c.rank === 'A' || c.rank === 'K');
+}
 
 function canPlayOn(played, top) {
   if (!top) return canStartCenter(played);
   if (played.rank === 'K' || top.rank === 'K') return true;
-  return (VALUE[played.rank]||0) === (VALUE[top.rank]||0) + 1;
+  return (VALUE[played.rank] || 0) === (VALUE[top.rank] || 0) + 1;
 }
 
 function getIntendedRank(played, top) {
@@ -157,11 +165,20 @@ function getIntendedRank(played, top) {
   return RANKS[nextVal - 1];
 }
 
-function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
+function cardDisplay(c) {
+  return c ? c.rank + c.suit : '';
+}
 
-var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]],
-    aiHand = [], aiSides = [[],[],[],[]], centers = [[],[],[],[]],
-    currentPlayer = "player", selected = null;
+var stock;
+var playerPayoff = [];
+var aiPayoff = [];
+var playerHand = [];
+var playerSides = [[], [], [], []];
+var aiHand = [];
+var aiSides = [[], [], [], []];
+var centers = [[], [], [], []];
+var currentPlayer = "player";
+var selected = null;
 
 var statusEl = document.getElementById("status");
 var newBtn = document.getElementById("new-game");
@@ -172,31 +189,37 @@ function setStatus(msg, color) {
 }
 
 function updateUI() {
-  if (!document.getElementById("player-payoff")) return; // safety
-
   document.getElementById("player-payoff").textContent = playerPayoff.length;
   document.getElementById("ai-payoff").textContent = aiPayoff.length;
 
-  // Centers
   var centersDiv = document.getElementById("centers");
   centersDiv.innerHTML = '';
+
   var selCard = null;
   if (selected) {
     if (selected === "payoff") {
       selCard = topCard(playerPayoff);
     } else {
       var parts = selected.split('-');
-      selCard = parts[0] === "hand" ? playerHand[parseInt(parts[1])] : topCard(playerSides[parseInt(parts[1])]);
+      var type = parts[0];
+      var idx = parseInt(parts[1]);
+      selCard = (type === "hand") ? playerHand[idx] : topCard(playerSides[idx]);
     }
   }
+
   for (var i = 0; i < 4; i++) {
     var t = topCard(centers[i]);
-    var pileEl = document.createElement("div"); pileEl.className = "pile";
+    var pileEl = document.createElement("div");
+    pileEl.className = "pile";
     var cardEl = document.createElement("div");
     cardEl.className = t ? "card " + t.color : "card empty";
     cardEl.textContent = t ? cardDisplay(t) : "A/K";
     pileEl.appendChild(cardEl);
-    pileEl.onclick = (function(idx){ return function(){ tryPlayToCenter(idx); }; })(i);
+    pileEl.onclick = (function(idx) {
+      return function() {
+        tryPlayToCenter(idx);
+      };
+    })(i);
     if (selCard && canPlayOn(selCard, t)) {
       if (!t) pileEl.classList.add("start-highlight");
       else cardEl.classList.add("highlight");
@@ -204,20 +227,24 @@ function updateUI() {
     centersDiv.appendChild(pileEl);
   }
 
-  // Hand
-  var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
+  var handDiv = document.getElementById("player-hand");
+  handDiv.innerHTML = '';
   for (var i = 0; i < playerHand.length; i++) {
     var c = playerHand[i];
     var cd = document.createElement("div");
     cd.className = "card " + c.color;
     cd.textContent = cardDisplay(c);
-    cd.onclick = (function(idx){ return function(){ selectCard("hand", idx); }; })(i);
+    cd.onclick = (function(idx) {
+      return function() {
+        selectCard("hand", idx);
+      };
+    })(i);
     if (selected === "hand-" + i) cd.classList.add("highlight");
     handDiv.appendChild(cd);
   }
 
-  // Side Stacks
-  var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
+  var sidesDiv = document.getElementById("player-sides");
+  sidesDiv.innerHTML = '';
   var isDiscardMode = selected && selected.startsWith("hand-");
   for (var i = 0; i < 4; i++) {
     var pile = playerSides[i];
@@ -240,7 +267,11 @@ function updateUI() {
         cardEl.style.zIndex = pile.length - k;
         if (k === pile.length - 1) {
           if (!isDiscardMode) {
-            cardEl.onclick = (function(idx){ return function(){ selectCard("side", idx); }; })(i);
+            cardEl.onclick = (function(idx) {
+              return function() {
+                selectCard("side", idx);
+              };
+            })(i);
           }
           if (selected === "side-" + i) cardEl.classList.add("highlight");
         }
@@ -250,13 +281,16 @@ function updateUI() {
 
     if (isDiscardMode) {
       stackEl.classList.add("highlight");
-      stackEl.onclick = (function(idx){ return function(){ discardToSide(idx); }; })(i);
+      stackEl.onclick = (function(idx) {
+        return function() {
+          discardToSide(idx);
+        };
+      })(i);
     }
 
     sidesDiv.appendChild(stackEl);
   }
 
-  // Player Payoff
   var playerPayoffDiv = document.getElementById("player-payoff-pile");
   playerPayoffDiv.innerHTML = '';
   var pp = topCard(playerPayoff);
@@ -264,12 +298,13 @@ function updateUI() {
   ppCard.className = pp ? "card " + pp.color : "card empty";
   ppCard.textContent = pp ? cardDisplay(pp) : "WIN!";
   if (pp) {
-    ppCard.onclick = function(){ selectCard("payoff"); };
+    ppCard.onclick = function() {
+      selectCard("payoff");
+    };
     if (selected === "payoff") ppCard.classList.add("highlight");
   }
   playerPayoffDiv.appendChild(ppCard);
 
-  // AI Payoff
   var aiPayoffDiv = document.getElementById("ai-payoff-pile");
   aiPayoffDiv.innerHTML = '';
   var ap = topCard(aiPayoff);
@@ -475,12 +510,7 @@ function startGame() {
   if (currentPlayer === "ai") setTimeout(aiTurn, 800);
 }
 
-// ────────────────────────────────────────────────
-// Attach event & start game — only after everything is defined
-// ────────────────────────────────────────────────
-if (newBtn) {
-  newBtn.onclick = startGame;
-}
+newBtn.onclick = startGame;
 startGame();
 </script>
 </body>
