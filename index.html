@@ -17,38 +17,46 @@
     align-items: center;
     touch-action: manipulation;
   }
-  h1 { font-size: 1.8rem; margin: 8px 0 10px; color: #ffcc00; text-align: center; }
-  #status { font-size: 1.2rem; margin: 8px 0 12px; text-align: center; min-height: 1.6em; font-weight: bold; }
-  .section { width: 100%; max-width: 440px; margin: 10px 0; }
-  h3 { margin: 6px 0 8px; text-align: center; font-size: 1.15rem; }
-  .cards { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  h1 { font-size: 1.9rem; margin: 8px 0 10px; color: #ffcc00; text-align: center; }
+  #status { font-size: 1.3rem; margin: 10px 0 14px; text-align: center; min-height: 1.8em; font-weight: bold; }
+  .section { width: 100%; max-width: 480px; margin: 12px 0; }
+  h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
+  .cards { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  
+  /* Hand – this is the critical part: make it VERY visible */
   #player-hand {
     display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
-    padding: 8px 0;
-    background: rgba(255,255,255,0.04);
-    border-radius: 8px;
+    padding: 12px 0;
+    min-height: 140px;              /* force height so cards can't collapse */
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
   }
+
+  /* Side stacks – keep fanned, but limit height */
   #player-sides {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 20px;
     justify-content: center;
   }
   .stacked-pile {
     position: relative;
     width: 92px;
     height: 220px;
+    flex-shrink: 0;
   }
   .pile {
     width: 92px;
     height: 130px;
     position: relative;
-    margin: 0 auto;
   }
   .card {
     width: 92px; height: 130px; border-radius: 10px; border: 3px solid #555;
@@ -67,7 +75,7 @@
   .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
   .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
   button {
-    width: 100%; max-width: 360px; margin: 16px auto; padding: 14px;
+    width: 100%; max-width: 380px; margin: 20px auto; padding: 16px;
     font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
     background: #ff6600; color: white;
   }
@@ -77,7 +85,7 @@
 
 <div class="main-container">
   <h1>Spite – Durban Rules</h1>
-  <div id="status">Ready...</div>
+  <div id="status">Your turn...</div>
 
   <div class="section">
     <h3>Opponent: <span id="ai-payoff">13</span> left</h3>
@@ -101,7 +109,7 @@
 
   <div class="section">
     <h3>Your Side Stacks (tap hand card → tap any stack to END turn)</h3>
-    <div id="player-sides" class="side-stacks"></div>
+    <div id="player-sides"></div>
   </div>
 
   <button id="new-game">New Game</button>
