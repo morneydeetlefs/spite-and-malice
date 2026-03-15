@@ -4,93 +4,225 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Spite – Durban Rules (Landscape)</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0a211b;
-      color: #fff;
-      margin: 0;
-      padding: 8px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      touch-action: manipulation;
+ <style>
+  body {
+    font-family: system-ui, -apple-system, BlinkMacOSystemFont, sans-serif;
+    background: #0a211b;
+    color: #fff;
+    margin: 0;
+    padding: 6px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    touch-action: manipulation;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+    margin: 6px 0 10px;
+    color: #ffcc00;
+    text-align: center;
+  }
+
+  #status {
+    font-size: 1.15rem;
+    margin: 4px 0 10px;
+    text-align: center;
+    min-height: 1.4em;
+    font-weight: bold;
+  }
+
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 960px;
+    gap: 10px;
+  }
+
+  .top-row {
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 4px;
+  }
+
+  .payoff-area {
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .payoff-area h3 {
+    font-size: 0.95rem;
+    margin: 4px 0 6px;
+  }
+
+  .center-area h3 {
+    font-size: 1.05rem;
+    margin: 4px 0 8px;
+    text-align: center;
+  }
+
+  .cards {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .hand-row {
+    margin: 10px 0 14px;
+  }
+
+  .hand-row h3 {
+    font-size: 1.1rem;
+    margin: 4px 0 8px;
+    text-align: center;
+  }
+
+  #player-hand {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 8px 4px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(0,0,0,0.15);
+    border-radius: 8px;
+  }
+
+  #player-hand .card {
+    flex: 0 0 84px;
+    height: 120px;
+    font-size: 24px;
+    border-width: 2px;
+    border-radius: 9px;
+  }
+
+  .sides-row h3 {
+    font-size: 1.05rem;
+    margin: 6px 0 8px;
+    text-align: center;
+  }
+
+  .side-stacks {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    justify-content: center;
+    width: 100%;
+    overflow-x: auto;
+    padding: 6px 0 10px;
+  }
+
+  .stacked-pile {
+    position: relative;
+    width: 84px;
+    height: 195px;
+    flex-shrink: 0;
+  }
+
+  .stacked-pile .card {
+    width: 84px;
+    height: 120px;
+    font-size: 24px;
+    border-width: 2px;
+    border-radius: 9px;
+  }
+
+  .pile {
+    width: 84px;
+    height: 120px;
+    position: relative;
+  }
+
+  .card {
+    background: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.65);
+    user-select: none;
+    transition: all 0.14s;
+    position: absolute;
+    left: 0;
+  }
+
+  .card:active {
+    transform: scale(1.10);
+    z-index: 10;
+  }
+
+  .card.red { color: #c00; }
+  .card.black { color: #111; }
+  .card.back {
+    background: linear-gradient(135deg, #003366, #0066cc);
+    color: white;
+    font-size: 46px;
+  }
+  .card.empty {
+    background: #334;
+    color: #aaa;
+    font-size: 15px;
+    border-color: #555;
+  }
+
+  .highlight {
+    border-color: #ff0 !important;
+    box-shadow: 0 0 26px #ff0 !important;
+    transform: scale(1.09) !important;
+    background: #fffa !important;
+  }
+
+  .start-highlight .card.empty {
+    background: #0f0 !important;
+    color: black !important;
+    border-color: #0f0 !important;
+    box-shadow: 0 0 30px #0f0 !important;
+  }
+
+  button {
+    width: 100%;
+    max-width: 340px;
+    margin: 12px auto;
+    padding: 14px;
+    font-size: 1.35rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    background: #ff6600;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* Very narrow screens – make cards even smaller */
+  @media (max-width: 700px) {
+    #player-hand .card,
+    .stacked-pile,
+    .stacked-pile .card,
+    .pile {
+      width: 76px;
+      height: 110px;
     }
-    h1 { font-size: 1.8rem; margin: 4px 0 8px; color: #ffcc00; text-align: center; }
-    #status { font-size: 1.2rem; margin: 6px 0 12px; text-align: center; min-height: 1.6em; font-weight: bold; }
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: 920px;
-      gap: 12px;
-    }
-    .top-row, .center-row, .hand-row, .sides-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .top-row { justify-content: center; gap: 40px; }
-    .payoff-area {
-      text-align: center;
-      min-width: 110px;
-    }
-    .payoff-area .pile { margin: 0 auto; }
-    .center-area { flex: 1; max-width: 500px; }
-    .cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    #player-hand {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      justify-content: center;
-      gap: 14px;
-      width: 100%;
-      overflow-x: auto;
-      padding: 8px 0;
-    }
-    .side-stacks {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 20px;
-      justify-content: center;
-      width: 100%;
-      overflow-x: auto;
+    #player-hand .card,
+    .stacked-pile .card {
+      font-size: 22px;
     }
     .stacked-pile {
-      position: relative;
-      width: 92px;
-      height: 210px;
-      flex-shrink: 0;
+      height: 180px;
     }
-    .pile {
-      width: 92px;
-      height: 130px;
-      position: relative;
+    .top-row {
+      gap: 20px;
     }
-    .card {
-      width: 92px; height: 130px; border-radius: 10px; border: 3px solid #555;
-      background: #fff; color: #000; font-size: 28px; font-weight: bold;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
-      user-select: none; transition: all 0.14s;
-      position: absolute;
-      left: 0;
-    }
-    .card:active { transform: scale(1.12); z-index: 10; }
-    .card.red { color: #c00; }
-    .card.black { color: #111; }
-    .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 50px; }
-    .card.empty { background: #334; color: #aaa; font-size: 16px; border-color: #555; }
-    .highlight { border-color: #ff0 !important; box-shadow: 0 0 28px #ff0 !important; transform: scale(1.1) !important; background: #fffa !important; }
-    .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 32px #0f0 !important; }
-    button {
-      width: 100%; max-width: 360px; margin: 16px auto; padding: 14px;
-      font-size: 1.4rem; font-weight: bold; border: none; border-radius: 12px;
-      background: #ff6600; color: white; cursor: pointer;
-    }
-  </style>
+    h1 { font-size: 1.5rem; }
+  }
+</style>
 </head>
 <body>
 
