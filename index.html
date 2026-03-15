@@ -17,24 +17,13 @@
       align-items: center;
       touch-action: manipulation;
     }
-    h1 { 
-      font-size: 1.8rem; 
-      margin: 4px 0 8px; 
-      color: #ffcc00; 
-      text-align: center; 
-    }
-    #status { 
-      font-size: 1.2rem; 
-      margin: 6px 0 12px; 
-      text-align: center; 
-      min-height: 1.6em; 
-      font-weight: bold; 
-    }
+    h1 { font-size: 1.8rem; margin: 4px 0 8px; color: #ffcc00; text-align: center; }
+    #status { font-size: 1.2rem; margin: 6px 0 12px; text-align: center; min-height: 1.6em; font-weight: bold; }
     .main-container {
       display: flex;
       flex-direction: column;
       width: 100%;
-      max-width: 920px;           /* good for landscape tablets/phones */
+      max-width: 920px;
       gap: 12px;
     }
     .top-row, .center-row, .hand-row, .sides-row {
@@ -50,12 +39,7 @@
     }
     .payoff-area .pile { margin: 0 auto; }
     .center-area { flex: 1; max-width: 500px; }
-    .cards { 
-      display: flex; 
-      gap: 16px; 
-      justify-content: center; 
-      flex-wrap: wrap; 
-    }
+    .cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
     #player-hand {
       display: flex;
       flex-direction: row;
@@ -111,7 +95,6 @@
 <body>
 
 <div class="main-container">
-
   <h1>Spite – Durban Rules</h1>
   <div id="status">Ready...</div>
 
@@ -145,62 +128,376 @@
   </div>
 
   <button id="new-game">New Game</button>
-
 </div>
 
 <script>
-// 1. Constants
 var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 var SUITS = ['♥','♦','♣','♠'];
 var VALUE = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
 
-// 2. Helper functions
-function createDeck() { ... }
-function shuffle(arr) { ... }
-function topCard(pile) { ... }
-function canStartCenter(c) { ... }
-function canPlayOn(played, top) { ... }
-function getIntendedRank(played, top) { ... }
-function cardDisplay(c) { ... }
+function createDeck() {
+  var deck = [];
+  for (var i = 0; i < 2; i++) {
+    for (var s = 0; s < SUITS.length; s++) {
+      for (var r = 0; r < RANKS.length; r++) {
+        var suit = SUITS[s], rank = RANKS[r];
+        deck.push({rank:rank, suit:suit, color:(suit==='♥'||suit==='♦')?'red':'black'});
+      }
+    }
+  }
+  return deck;
+}
 
-// 3. Game state variables
+function shuffle(arr) {
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
+  }
+  return arr;
+}
+
+function topCard(pile) { return pile.length > 0 ? pile[pile.length-1] : null; }
+function canStartCenter(c) { return c && (c.rank === 'A' || c.rank === 'K'); }
+
+function canPlayOn(played, top) {
+  if (!top) return canStartCenter(played);
+  if (played.rank === 'K' || top.rank === 'K') return true;
+  return (VALUE[played.rank]||0) === (VALUE[top.rank]||0) + 1;
+}
+
+function getIntendedRank(played, top) {
+  if (played.rank !== 'K') return played.rank;
+  if (!top) return 'A';
+  var nextVal = VALUE[top.rank] + 1;
+  if (nextVal > 12) return 'Q';
+  return RANKS[nextVal - 1];
+}
+
+function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
+
 var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]],
     aiHand = [], aiSides = [[],[],[],[]], centers = [[],[],[],[]],
     currentPlayer = "player", selected = null;
 
-// 4. DOM references & utility functions
 var statusEl = document.getElementById("status");
 var newBtn = document.getElementById("new-game");
 
-function setStatus(msg, color) { ... }
-function updateUI() { ... }
-function selectCard(type, idx) { ... }
-function discardToSide(sideIdx) { ... }
-function tryPlayToCenter(i) { ... }
-function endPlayerTurn() { ... }
-function aiPlay() { ... }
-function aiTurn() { ... }
-
-// 5. The function that was missing / out of order
-function startGame() {
-    stock = shuffle(createDeck());
-    playerPayoff = stock.splice(0,13);
-    aiPayoff = stock.splice(0,13);
-    playerHand = stock.splice(0,5);
-    aiHand = stock.splice(0,5);
-    playerSides = [[],[],[],[]];
-    aiSides = [[],[],[],[]];
-    centers = [[],[],[],[]];
-    selected = null;
-    currentPlayer = playerHand.some(canStartCenter) ? "player" : "ai";
-    updateUI();
-    setStatus(currentPlayer === "player" ? "Your turn – tap payoff, hand or side" : "AI starts...");
-    if (currentPlayer === "ai") setTimeout(aiTurn, 800);
+function setStatus(msg, color) {
+  statusEl.textContent = msg;
+  if (color) statusEl.style.color = color;
 }
 
-// 6. Event listener & initial call — MUST come AFTER startGame is defined
-newBtn.onclick = startGame;
-startGame();   // ← this is line ~282 in your file — it needs startGame to exist
+function updateUI() {
+  if (!document.getElementById("player-payoff")) return; // safety
+
+  document.getElementById("player-payoff").textContent = playerPayoff.length;
+  document.getElementById("ai-payoff").textContent = aiPayoff.length;
+
+  // Centers
+  var centersDiv = document.getElementById("centers");
+  centersDiv.innerHTML = '';
+  var selCard = null;
+  if (selected) {
+    if (selected === "payoff") {
+      selCard = topCard(playerPayoff);
+    } else {
+      var parts = selected.split('-');
+      selCard = parts[0] === "hand" ? playerHand[parseInt(parts[1])] : topCard(playerSides[parseInt(parts[1])]);
+    }
+  }
+  for (var i = 0; i < 4; i++) {
+    var t = topCard(centers[i]);
+    var pileEl = document.createElement("div"); pileEl.className = "pile";
+    var cardEl = document.createElement("div");
+    cardEl.className = t ? "card " + t.color : "card empty";
+    cardEl.textContent = t ? cardDisplay(t) : "A/K";
+    pileEl.appendChild(cardEl);
+    pileEl.onclick = (function(idx){ return function(){ tryPlayToCenter(idx); }; })(i);
+    if (selCard && canPlayOn(selCard, t)) {
+      if (!t) pileEl.classList.add("start-highlight");
+      else cardEl.classList.add("highlight");
+    }
+    centersDiv.appendChild(pileEl);
+  }
+
+  // Hand
+  var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
+  for (var i = 0; i < playerHand.length; i++) {
+    var c = playerHand[i];
+    var cd = document.createElement("div");
+    cd.className = "card " + c.color;
+    cd.textContent = cardDisplay(c);
+    cd.onclick = (function(idx){ return function(){ selectCard("hand", idx); }; })(i);
+    if (selected === "hand-" + i) cd.classList.add("highlight");
+    handDiv.appendChild(cd);
+  }
+
+  // Side Stacks
+  var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
+  var isDiscardMode = selected && selected.startsWith("hand-");
+  for (var i = 0; i < 4; i++) {
+    var pile = playerSides[i];
+    var stackEl = document.createElement("div");
+    stackEl.className = "stacked-pile";
+
+    if (pile.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "card empty";
+      empty.textContent = "-";
+      empty.style.top = "0px";
+      stackEl.appendChild(empty);
+    } else {
+      for (var k = 0; k < pile.length; k++) {
+        var c = pile[k];
+        var cardEl = document.createElement("div");
+        cardEl.className = "card " + c.color;
+        cardEl.textContent = cardDisplay(c);
+        cardEl.style.top = (k * 18) + "px";
+        cardEl.style.zIndex = pile.length - k;
+        if (k === pile.length - 1) {
+          if (!isDiscardMode) {
+            cardEl.onclick = (function(idx){ return function(){ selectCard("side", idx); }; })(i);
+          }
+          if (selected === "side-" + i) cardEl.classList.add("highlight");
+        }
+        stackEl.appendChild(cardEl);
+      }
+    }
+
+    if (isDiscardMode) {
+      stackEl.classList.add("highlight");
+      stackEl.onclick = (function(idx){ return function(){ discardToSide(idx); }; })(i);
+    }
+
+    sidesDiv.appendChild(stackEl);
+  }
+
+  // Player Payoff
+  var playerPayoffDiv = document.getElementById("player-payoff-pile");
+  playerPayoffDiv.innerHTML = '';
+  var pp = topCard(playerPayoff);
+  var ppCard = document.createElement("div");
+  ppCard.className = pp ? "card " + pp.color : "card empty";
+  ppCard.textContent = pp ? cardDisplay(pp) : "WIN!";
+  if (pp) {
+    ppCard.onclick = function(){ selectCard("payoff"); };
+    if (selected === "payoff") ppCard.classList.add("highlight");
+  }
+  playerPayoffDiv.appendChild(ppCard);
+
+  // AI Payoff
+  var aiPayoffDiv = document.getElementById("ai-payoff-pile");
+  aiPayoffDiv.innerHTML = '';
+  var ap = topCard(aiPayoff);
+  var apCard = document.createElement("div");
+  apCard.className = ap ? "card " + ap.color : "card empty";
+  apCard.textContent = ap ? cardDisplay(ap) : "DONE";
+  aiPayoffDiv.appendChild(apCard);
+}
+
+function selectCard(type, idx) {
+  if (currentPlayer !== "player") return;
+  var newSel = (type === "payoff") ? "payoff" : type + "-" + idx;
+  if (selected === newSel) {
+    selected = null;
+    updateUI();
+    setStatus("Selection cancelled");
+    return;
+  }
+  selected = newSel;
+  updateUI();
+  var msg = (type === "hand") ? "Tap center or side stack (side ends turn)" :
+            (type === "payoff") ? "Tap center to play payoff top" : "Tap center to play";
+  setStatus(msg);
+}
+
+function discardToSide(sideIdx) {
+  if (currentPlayer !== "player" || !selected || !selected.startsWith("hand-")) return;
+  var handIdx = parseInt(selected.split('-')[1]);
+  var card = playerHand[handIdx];
+  var cardCopy = { rank: card.rank, suit: card.suit, color: card.color };
+  playerSides[sideIdx].push(cardCopy);
+  playerHand.splice(handIdx, 1);
+  selected = null;
+  updateUI();
+  setStatus("Discarded to side heap → turn ends");
+  endPlayerTurn();
+}
+
+function tryPlayToCenter(i) {
+  if (currentPlayer !== "player" || !selected) return;
+
+  var card, sourceType, sourceIdx;
+  if (selected === "payoff") {
+    card = topCard(playerPayoff);
+    sourceType = "payoff";
+  } else {
+    var parts = selected.split('-');
+    sourceType = parts[0];
+    sourceIdx = parseInt(parts[1]);
+    card = sourceType === "hand" ? playerHand[sourceIdx] : topCard(playerSides[sourceIdx]);
+  }
+
+  var topBefore = topCard(centers[i]);
+  if (!card || !canPlayOn(card, topBefore)) {
+    setStatus("Cannot play there", "#ff6666");
+    return;
+  }
+
+  var intendedRank = getIntendedRank(card, topBefore);
+  var cardCopy = { rank: intendedRank, suit: card.suit, color: card.color };
+
+  if (sourceType === "payoff") {
+    playerPayoff.pop();
+  } else if (sourceType === "hand") {
+    playerHand.splice(sourceIdx, 1);
+  } else {
+    playerSides[sourceIdx].pop();
+  }
+
+  centers[i].push(cardCopy);
+
+  if (cardCopy.rank === 'Q') {
+    stock = stock.concat(centers[i]);
+    shuffle(stock);
+    centers[i] = [];
+  }
+
+  selected = null;
+  updateUI();
+  setStatus("Played " + cardDisplay(cardCopy));
+
+  if (playerPayoff.length === 0) {
+    setStatus("YOU WIN! 🎉", "#00ff00");
+    return;
+  }
+}
+
+function endPlayerTurn() {
+  while (playerHand.length < 5 && stock.length > 0) playerHand.push(stock.shift());
+  selected = null;
+  updateUI();
+
+  if (playerPayoff.length === 0) return;
+
+  currentPlayer = "ai";
+  setStatus("AI thinking...");
+  setTimeout(aiTurn, 700);
+}
+
+function aiPlay() {
+  if (aiPayoff.length > 0) {
+    var tp = topCard(aiPayoff);
+    for (var j = 0; j < 4; j++) {
+      var topB = topCard(centers[j]);
+      if (canPlayOn(tp, topB)) {
+        var intended = getIntendedRank(tp, topB);
+        aiPayoff.pop();
+        centers[j].push({rank: intended, suit: tp.suit, color: tp.color});
+        if (intended === 'Q') {
+          stock = stock.concat(centers[j]);
+          shuffle(stock);
+          centers[j] = [];
+        }
+        return true;
+      }
+    }
+  }
+
+  for (var h = 0; h < aiHand.length; h++) {
+    var card = aiHand[h];
+    for (var j = 0; j < 4; j++) {
+      var topB = topCard(centers[j]);
+      if (canPlayOn(card, topB)) {
+        var intended = getIntendedRank(card, topB);
+        var cardCopy = {rank: intended, suit: card.suit, color: card.color};
+        aiHand.splice(h, 1);
+        centers[j].push(cardCopy);
+        if (intended === 'Q') {
+          stock = stock.concat(centers[j]);
+          shuffle(stock);
+          centers[j] = [];
+        }
+        return true;
+      }
+    }
+  }
+
+  for (var s = 0; s < 4; s++) {
+    var card = topCard(aiSides[s]);
+    if (card) {
+      for (var j = 0; j < 4; j++) {
+        var topB = topCard(centers[j]);
+        if (canPlayOn(card, topB)) {
+          var intended = getIntendedRank(card, topB);
+          var cardCopy = {rank: intended, suit: card.suit, color: card.color};
+          aiSides[s].pop();
+          centers[j].push(cardCopy);
+          if (intended === 'Q') {
+            stock = stock.concat(centers[j]);
+            shuffle(stock);
+            centers[j] = [];
+          }
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function aiTurn() {
+  var movesMade = 0;
+  while (aiPlay() && movesMade < 30) {
+    movesMade++;
+    updateUI();
+  }
+
+  if (aiHand.length > 0) {
+    var handIdx = Math.floor(Math.random() * aiHand.length);
+    var sideIdx = Math.floor(Math.random() * 4);
+    var card = aiHand[handIdx];
+    var cardCopy = {rank: card.rank, suit: card.suit, color: card.color};
+    aiSides[sideIdx].push(cardCopy);
+    aiHand.splice(handIdx, 1);
+    updateUI();
+  }
+
+  while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
+  updateUI();
+
+  if (aiPayoff.length === 0) {
+    setStatus("AI wins 😈", "#ff4444");
+    return;
+  }
+
+  currentPlayer = "player";
+  setStatus("Your turn");
+}
+
+function startGame() {
+  stock = shuffle(createDeck());
+  playerPayoff = stock.splice(0,13);
+  aiPayoff = stock.splice(0,13);
+  playerHand = stock.splice(0,5);
+  aiHand = stock.splice(0,5);
+  playerSides = [[],[],[],[]];
+  aiSides = [[],[],[],[]];
+  centers = [[],[],[],[]];
+  selected = null;
+  currentPlayer = playerHand.some(canStartCenter) ? "player" : "ai";
+  updateUI();
+  setStatus(currentPlayer === "player" ? "Your turn – tap payoff, hand or side" : "AI starts...");
+  if (currentPlayer === "ai") setTimeout(aiTurn, 800);
+}
+
+// ────────────────────────────────────────────────
+// Attach event & start game — only after everything is defined
+// ────────────────────────────────────────────────
+if (newBtn) {
+  newBtn.onclick = startGame;
+}
+startGame();
 </script>
 </body>
 </html>
