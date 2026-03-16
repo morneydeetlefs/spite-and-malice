@@ -110,7 +110,7 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false;
+  var hasPlayedThisTurn = false;   // must play at least one card
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -125,6 +125,7 @@
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
     document.getElementById("player-payoff-pile").innerHTML = playerPayoff.length > 0 ? '<div class="card back">' + playerPayoff.length + '</div>' : '<div class="card empty">WIN!</div>';
 
+    // Centers
     var centersDiv = document.getElementById("centers"); centersDiv.innerHTML = '';
     var selCard = null;
     if (selected) {
@@ -146,6 +147,7 @@
       centersDiv.appendChild(pileEl);
     }
 
+    // Hand
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -157,6 +159,7 @@
       handDiv.appendChild(cd);
     }
 
+    // Side Stacks - FIXED: whole pile clickable for discard
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
@@ -220,6 +223,7 @@
       return;
     }
 
+    // Push a COPY of the card to prevent mutation/display bugs
     var cardCopy = { rank: card.rank, suit: card.suit, color: card.color };
 
     if (type === "hand") playerHand.splice(idx,1);
