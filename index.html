@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Spite – Durban Rules (Fixed)</title>
+  <title>Spite – Durban Rules (Fixed + Fanned Stacks)</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -22,7 +22,7 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .pile { width: 92px; height: 130px; position: relative; }
+    .pile { width: 92px; height: 130px; position: relative; margin: 0 auto; }
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
       background: #fff; color: #000; font-size: 26px; font-weight: bold;
@@ -41,6 +41,30 @@
       width: 100%; max-width: 380px; margin: 16px auto; padding: 16px;
       font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
       background: #ff6600; color: white;
+    }
+
+    /* Side stacks – now fanned downward with top card at bottom */
+    #player-sides {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .stacked-pile {
+      position: relative;
+      width: 92px;
+      height: 220px; /* enough for 5–6 cards fanned */
+      flex-shrink: 0;
+    }
+    .stacked-pile .card {
+      position: absolute;
+      left: 0;
+      width: 92px;
+      height: 130px;
+      border-radius: 12px;
+      border: 3px solid #666;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
     }
   </style>
 </head>
@@ -159,36 +183,44 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks - FIXED: whole pile clickable for discard
+    // Side Stacks – now fanned with top card at bottom
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
+    var isDiscardMode = selected && selected.startsWith("hand-") && !hasPlayedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
-      var p = document.createElement("div"); p.className = "pile";
-      var t = topCard(pile);
+      var stackEl = document.createElement("div");
+      stackEl.className = "stacked-pile";
 
-      var inner = document.createElement("div");
-      if (t) {
-        inner.className = "card " + t.color;
-        inner.textContent = cardDisplay(t);
-        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
-        p.appendChild(inner);
+      if (pile.length === 0) {
+        var empty = document.createElement("div");
+        empty.className = "card empty";
+        empty.textContent = "-";
+        stackEl.appendChild(empty);
       } else {
-        inner.className = "card empty";
-        inner.textContent = "-";
-        p.appendChild(inner);
+        // Fan downward: oldest at top, newest (top card) at bottom
+        for (var k = 0; k < pile.length; k++) {
+          var c = pile[k];
+          var cardEl = document.createElement("div");
+          cardEl.className = "card " + c.color;
+          cardEl.textContent = cardDisplay(c);
+          cardEl.style.top = (k * 18) + "px";  // fan downward
+          cardEl.style.zIndex = pile.length - k;  // newest on top
+          if (k === pile.length - 1) {  // only top card clickable
+            cardEl.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
+            if (selected === "side-" + i) cardEl.classList.add("highlight");
+          }
+          stackEl.appendChild(cardEl);
+        }
       }
 
-      if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) {
-        p.classList.add("highlight");
+      if (isDiscardMode) {
+        stackEl.classList.add("highlight");
+        stackEl.onclick = (function(idx){ 
+          return function(){ discardToSide(idx); }; 
+        })(i);
       }
 
-      p.onclick = (function(idx){ 
-        return function(){ 
-          if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) discardToSide(idx); 
-        }; 
-      })(i);
-
-      sidesDiv.appendChild(p);
+      sidesDiv.appendChild(stackEl);
     }
   }
 
@@ -223,7 +255,6 @@
       return;
     }
 
-    // Push a COPY of the card to prevent mutation/display bugs
     var cardCopy = { rank: card.rank, suit: card.suit, color: card.color };
 
     if (type === "hand") playerHand.splice(idx,1);
