@@ -22,13 +22,16 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .pile { width: 92px; height: 130px; position: relative; }
+    .pile { width: 92px; height: 220px; position: relative; } /* increased height for fan */
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
       background: #fff; color: #000; font-size: 26px; font-weight: bold;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
+      position: absolute;
+      left: 0;
+      top: 0;
     }
     .card:active { transform: scale(1.15); }
     .card.red { color: #c00; }
@@ -41,31 +44,6 @@
       width: 100%; max-width: 380px; margin: 16px auto; padding: 16px;
       font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
       background: #ff6600; color: white;
-    }
-
-    /* Fanned side stacks */
-    #player-sides {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-    }
-    .stacked-pile {
-      position: relative;
-      width: 92px;
-      height: 220px; /* space for fan */
-      flex-shrink: 0;
-    }
-    .stacked-pile .card {
-      position: absolute;
-      left: 0;
-      width: 92px;
-      height: 130px;
-      border-radius: 12px;
-      border: 3px solid #666;
-      background: #fff;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-      z-index: 1;
     }
   </style>
 </head>
@@ -135,7 +113,7 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false;
+  var hasPlayedThisTurn = false; // must play at least one card
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -150,6 +128,7 @@
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
     document.getElementById("player-payoff-pile").innerHTML = playerPayoff.length > 0 ? '<div class="card back">' + playerPayoff.length + '</div>' : '<div class="card empty">WIN!</div>';
 
+    // Centers
     var centersDiv = document.getElementById("centers"); centersDiv.innerHTML = '';
     var selCard = null;
     if (selected) {
@@ -171,6 +150,7 @@
       centersDiv.appendChild(pileEl);
     }
 
+    // Hand
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -182,43 +162,46 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks - now fanned, top card clickable
+    // Side Stacks - fanned downward, top card at bottom, discard still works
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var isDiscardMode = selected && selected.startsWith("hand-") && !hasPlayedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
-      var stackEl = document.createElement("div");
-      stackEl.className = "stacked-pile";
+      var p = document.createElement("div"); p.className = "pile";
 
       if (pile.length === 0) {
         var empty = document.createElement("div");
         empty.className = "card empty";
         empty.textContent = "-";
-        stackEl.appendChild(empty);
+        p.appendChild(empty);
       } else {
-        for (var k = 0; k < pile.length; k++) {
+        // Fan downward – newest card at bottom
+        for (var k = pile.length - 1; k >= 0; k--) {
           var c = pile[k];
           var cardEl = document.createElement("div");
           cardEl.className = "card " + c.color;
           cardEl.textContent = cardDisplay(c);
-          cardEl.style.top = (k * 18) + "px";  // fan downward
-          cardEl.style.zIndex = pile.length - k;
-          if (k === pile.length - 1) {  // only top card is interactive
+          cardEl.style.top = ((pile.length - 1 - k) * 18) + "px"; // newest at bottom (top = 0)
+          cardEl.style.zIndex = k + 1; // top card highest
+          if (k === pile.length - 1) { // only top card interactive
             cardEl.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
             if (selected === "side-" + i) cardEl.classList.add("highlight");
           }
-          stackEl.appendChild(cardEl);
+          p.appendChild(cardEl);
         }
       }
 
       if (isDiscardMode) {
-        stackEl.classList.add("highlight");
-        stackEl.onclick = (function(idx){ 
-          return function(){ discardToSide(idx); }; 
-        })(i);
+        p.classList.add("highlight");
       }
 
-      sidesDiv.appendChild(stackEl);
+      p.onclick = (function(idx){ 
+        return function(){ 
+          if (isDiscardMode) discardToSide(idx); 
+        }; 
+      })(i);
+
+      sidesDiv.appendChild(p);
     }
   }
 
