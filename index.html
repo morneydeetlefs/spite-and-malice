@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Spite – Durban Rules (Fixed + Fanned Stacks)</title>
+  <title>Spite – Durban Rules (Fixed)</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -22,16 +22,13 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .pile { width: 92px; height: 220px; position: relative; } /* increased height for fan */
+    .pile { width: 92px; height: 130px; position: relative; }
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
       background: #fff; color: #000; font-size: 26px; font-weight: bold;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
-      position: absolute;
-      left: 0;
-      top: 0;
     }
     .card:active { transform: scale(1.15); }
     .card.red { color: #c00; }
@@ -113,7 +110,7 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false; // must play at least one card
+  var hasPlayedThisTurn = false;
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -128,7 +125,6 @@
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
     document.getElementById("player-payoff-pile").innerHTML = playerPayoff.length > 0 ? '<div class="card back">' + playerPayoff.length + '</div>' : '<div class="card empty">WIN!</div>';
 
-    // Centers
     var centersDiv = document.getElementById("centers"); centersDiv.innerHTML = '';
     var selCard = null;
     if (selected) {
@@ -150,7 +146,6 @@
       centersDiv.appendChild(pileEl);
     }
 
-    // Hand
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -162,42 +157,31 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks - fanned downward, top card at bottom, discard still works
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
-    var isDiscardMode = selected && selected.startsWith("hand-") && !hasPlayedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
+      var t = topCard(pile);
 
-      if (pile.length === 0) {
-        var empty = document.createElement("div");
-        empty.className = "card empty";
-        empty.textContent = "-";
-        p.appendChild(empty);
+      var inner = document.createElement("div");
+      if (t) {
+        inner.className = "card " + t.color;
+        inner.textContent = cardDisplay(t);
+        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
+        p.appendChild(inner);
       } else {
-        // Fan downward – newest card at bottom
-        for (var k = pile.length - 1; k >= 0; k--) {
-          var c = pile[k];
-          var cardEl = document.createElement("div");
-          cardEl.className = "card " + c.color;
-          cardEl.textContent = cardDisplay(c);
-          cardEl.style.top = ((pile.length - 1 - k) * 18) + "px"; // newest at bottom (top = 0)
-          cardEl.style.zIndex = k + 1; // top card highest
-          if (k === pile.length - 1) { // only top card interactive
-            cardEl.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
-            if (selected === "side-" + i) cardEl.classList.add("highlight");
-          }
-          p.appendChild(cardEl);
-        }
+        inner.className = "card empty";
+        inner.textContent = "-";
+        p.appendChild(inner);
       }
 
-      if (isDiscardMode) {
+      if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) {
         p.classList.add("highlight");
       }
 
       p.onclick = (function(idx){ 
         return function(){ 
-          if (isDiscardMode) discardToSide(idx); 
+          if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) discardToSide(idx); 
         }; 
       })(i);
 
