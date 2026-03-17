@@ -120,9 +120,9 @@
 
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
-  var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false;
-  var hasDiscardedThisTurn = false;
+  var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], aiSides = [[],[],[],[]], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
+var hasPlayedThisTurn = false;
+var hasDiscardedThisTurn = false;
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -387,6 +387,7 @@
     playerHand = stock.splice(0,5);
     aiHand = stock.splice(0,5);
     playerSides = [[],[],[],[]];
+    aiSides = [[],[],[],[]];
     centers = [[],[],[],[]];
     selected = null;
     hasPlayedThisTurn = false;
