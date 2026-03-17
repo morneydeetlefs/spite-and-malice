@@ -177,17 +177,14 @@
       if (t) {
         inner.className = "card " + t.color;
         inner.textContent = cardDisplay(t);
-
-        // FIXED: only stop propagation when NOT discarding (i.e. when selecting/playing the card)
-        inner.onclick = (function(idx) {
+        inner.onclick = (function(idx){ 
           return function(e) {
-            if (!isDiscardMode) {
-              e.stopPropagation();  // only stop when selecting/playing
+            if (!isDiscardMode) {  // ← ONLY stop propagation when NOT discarding
+              e.stopPropagation();
             }
             selectCard("side", idx);
           };
         })(i);
-
         p.appendChild(inner);
       } else {
         inner.className = "card empty";
