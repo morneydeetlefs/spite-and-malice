@@ -560,18 +560,51 @@
   }
 
   // FINAL FALLBACK: if NOTHING was played, discard one card if hand has any
+    // Priority 4: Discard — intelligent choice
   if (!played && aiHand.length > 0) {
-    // Pick first card (or random if preferred)
-    let discardIndex = 0; // or Math.floor(Math.random() * aiHand.length);
-    let card = aiHand[discardIndex];
+    var playerPayoffTop = topCard(playerPayoff);
+    var playerNeeded = playerPayoffTop ? RANKS[VALUE[playerPayoffTop.rank]] : null;
 
-    // Pick first side stack (or random)
-    let targetStack = 0; // or Math.floor(Math.random() * 4);
+    var bestCard = null;
+    var bestScore = -Infinity;
+    var bestIndex = -1;
 
-    aiSides[targetStack].push(card);
-    aiHand.splice(discardIndex, 1);
+    for (var h = 0; h < aiHand.length; h++) {
+      var card = aiHand[h];
+
+      // Skip Kings unless it's the only card left
+      if (card.rank === 'K' && aiHand.length > 1) continue;
+
+      var score = 0;
+
+      // Spite bonus: card player could use next
+      if (playerNeeded && card.rank === playerNeeded) score += 30;
+      if (card.rank === 'K' && !playerPayoffTop) score += 20;
+
+      // Penalty for high-value cards (AI wants to keep them)
+      if (['K','Q','J','10'].includes(card.rank)) score -= 15;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestCard = card;
+        bestIndex = h;
+      }
+    }
+
+    // Fallback: if no good spite target, discard lowest value card
+    if (!bestCard) {
+      bestCard = aiHand.reduce((prev, curr) => 
+        VALUE[prev.rank] < VALUE[curr.rank] ? prev : curr);
+      bestIndex = aiHand.indexOf(bestCard);
+    }
+
+    // FIXED: choose random side stack instead of always 0
+    var targetStack = Math.floor(Math.random() * 4);
+
+    aiSides[targetStack].push(bestCard);
+    aiHand.splice(bestIndex, 1);
     updateUI();
-    setStatus("AI discarded to side stack (no legal play)");
+    setStatus("AI discarded strategically to side stack");
   }
 
   // End turn
