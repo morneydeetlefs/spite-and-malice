@@ -110,8 +110,8 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false; // still used for "must play at least one card" rule
-  var hasDiscardedThisTurn = false; // NEW: blocks multiple discards
+  var hasPlayedThisTurn = false;
+  var hasDiscardedThisTurn = false;
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -121,10 +121,20 @@
     if (color) statusEl.style.color = color;
   }
 
+  // NEW: Refill hand to 5 cards from stock (used for both player and AI)
+  function refillHand(player) {
+    var hand = player === "player" ? playerHand : aiHand;
+    while (hand.length < 5 && stock.length > 0) {
+      hand.push(stock.shift());
+    }
+    updateUI();
+  }
+
   function updateUI() {
     document.getElementById("player-payoff").textContent = playerPayoff.length;
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
     document.getElementById("player-payoff-pile").innerHTML = playerPayoff.length > 0 ? '<div class="card back">' + playerPayoff.length + '</div>' : '<div class="card empty">WIN!</div>';
+
     var centersDiv = document.getElementById("centers"); centersDiv.innerHTML = '';
     var selCard = null;
     if (selected) {
@@ -145,6 +155,7 @@
       }
       centersDiv.appendChild(pileEl);
     }
+
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -155,6 +166,7 @@
       if (selected === "hand-" + i) cd.classList.add("highlight");
       handDiv.appendChild(cd);
     }
+
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
@@ -222,8 +234,15 @@
     if (centers[i].length >= 13) { stock = stock.concat(centers[i]); shuffle(stock); centers[i] = []; }
     hasPlayedThisTurn = true;
     selected = null;
+
+    // NEW: refill hand immediately after playing to center
+    while (playerHand.length < 5 && stock.length > 0) {
+      playerHand.push(stock.shift());
+    }
+
     updateUI();
     setStatus("Played " + cardDisplay(cardCopy));
+
     if (playerPayoff.length > 0) {
       var tp = topCard(playerPayoff);
       for (var j = 0; j < 4; j++) {
@@ -232,12 +251,19 @@
           playerPayoff.pop();
           centers[j].push(tpCopy);
           if (centers[j].length >= 13) { stock = stock.concat(centers[j]); shuffle(stock); centers[j] = []; }
+
+          // NEW: refill again after auto-playoff
+          while (playerHand.length < 5 && stock.length > 0) {
+            playerHand.push(stock.shift());
+          }
+
           setStatus("Auto-played payoff " + cardDisplay(tpCopy));
           updateUI();
           break;
         }
       }
     }
+
     if (playerPayoff.length === 0) {
       setStatus("YOU WIN! 🎉", "#00ff00");
       return;
@@ -263,7 +289,7 @@
       for (var i = 0; i < 4; i++) {
         var topB = topCard(centers[i]);
         if (canPlayOn(tp, topB)) {
-          var intended = getIntendedRank(tp, topB); // FIXED: use intended rank for AI payoff Kings
+          var intended = getIntendedRank(tp, topB);
           var cardCopy = {rank: intended, suit: tp.suit, color: tp.color};
           aiPayoff.pop();
           centers[i].push(cardCopy);
@@ -277,7 +303,63 @@
         }
       }
     }
+
     while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
+
+    // NEW: refill AI hand after each play (in case it played multiple from hand/side)
+    var movesMade = 0;
+    while (played && movesMade < 30) {
+      movesMade++;
+      played = false;
+      // Repeat AI play logic (hand/side only this time)
+      for (var h = 0; h < aiHand.length; h++) {
+        var card = aiHand[h];
+        for (var j = 0; j < 4; j++) {
+          var topB = topCard(centers[j]);
+          if (canPlayOn(card, topB)) {
+            var intended = getIntendedRank(card, topB);
+            var cardCopy = {rank: intended, suit: card.suit, color: card.color};
+            aiHand.splice(h, 1);
+            centers[j].push(cardCopy);
+            if (intended === 'Q') {
+              stock = stock.concat(centers[j]);
+              shuffle(stock);
+              centers[j] = [];
+            }
+            played = true;
+            break;
+          }
+        }
+        if (played) break;
+      }
+      if (!played) {
+        for (var s = 0; s < 4; s++) {
+          var card = topCard(aiSides[s]);
+          if (card) {
+            for (var j = 0; j < 4; j++) {
+              var topB = topCard(centers[j]);
+              if (canPlayOn(card, topB)) {
+                var intended = getIntendedRank(card, topB);
+                var cardCopy = {rank: intended, suit: card.suit, color: card.color};
+                aiSides[s].pop();
+                centers[j].push(cardCopy);
+                if (intended === 'Q') {
+                  stock = stock.concat(centers[j]);
+                  shuffle(stock);
+                  centers[j] = [];
+                }
+                played = true;
+                break;
+              }
+            }
+            if (played) break;
+          }
+        }
+      }
+      while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
+      updateUI();
+    }
+
     updateUI();
     if (aiPayoff.length === 0) { setStatus("AI wins 😈", "#ff4444"); return; }
     currentPlayer = "player";
