@@ -450,8 +450,52 @@
   function aiTurn() {
   let played = false;
 
-  // Payoff first
-  if (aiPayoff.length > 0) {
+  // === Priority 0: MUST play Aces to empty centers if possible ===
+  // Check hand for Aces
+  for (let h = 0; h < aiHand.length; h++) {
+    let card = aiHand[h];
+    if (card.rank === 'A') {
+      for (let j = 0; j < 4; j++) {
+        if (!topCard(centers[j])) {  // empty pile
+          let cardCopy = {rank: 'A', suit: card.suit, color: card.color};
+          aiHand.splice(h, 1);
+          centers[j].push(cardCopy);
+          played = true;
+          break;
+        }
+      }
+      if (played) break;
+    }
+  }
+
+  // Check side stacks for Aces (if no hand Ace played)
+  if (!played) {
+    for (let s = 0; s < 4; s++) {
+      let card = topCard(aiSides[s]);
+      if (card && card.rank === 'A') {
+        for (let j = 0; j < 4; j++) {
+          if (!topCard(centers[j])) {
+            let cardCopy = {rank: 'A', suit: card.suit, color: card.color};
+            aiSides[s].pop();
+            centers[j].push(cardCopy);
+            played = true;
+            break;
+          }
+        }
+        if (played) break;
+      }
+    }
+  }
+
+  // Refill hand if empty after Ace plays
+  if (aiHand.length === 0) {
+    while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
+  }
+
+  updateUI();
+
+  // === Priority 1: Payoff ===
+  if (!played && aiPayoff.length > 0) {
     let tp = topCard(aiPayoff);
     for (let i = 0; i < 4; i++) {
       let topB = topCard(centers[i]);
@@ -460,11 +504,6 @@
         let cardCopy = {rank: intended, suit: tp.suit, color: tp.color};
         aiPayoff.pop();
         centers[i].push(cardCopy);
-        if (intended === 'Q') {
-  stock = stock.concat(centers[j]);
-  shuffle(stock);
-  centers[j] = [];
-}
         if (intended === 'Q') {
           stock = stock.concat(centers[i]);
           shuffle(stock);
@@ -476,138 +515,109 @@
     }
   }
 
-  // Refill hand if empty
-  if (aiHand.length === 0) {
-    while (aiHand.length < 5 && stock.length > 0) {
-      aiHand.push(stock.shift());
+  // === Priority 2: Hand plays — help own payoff first ===
+  if (!played && aiHand.length > 0) {
+    let ownPayoffTop = topCard(aiPayoff);
+    let ownNeeded = ownPayoffTop ? RANKS[VALUE[ownPayoffTop.rank]] : 'A';
+
+    // Try exact match for payoff
+    for (let h = 0; h < aiHand.length; h++) {
+      let card = aiHand[h];
+      if (card.rank === ownNeeded || (card.rank === 'K' && !ownPayoffTop)) {
+        for (let j = 0; j < 4; j++) {
+          let topB = topCard(centers[j]);
+          if (canPlayOn(card, topB)) {
+            let intended = getIntendedRank(card, topB);
+            let cardCopy = {rank: intended, suit: card.suit, color: card.color};
+            aiHand.splice(h, 1);
+            centers[j].push(cardCopy);
+            if (intended === 'Q') {
+              stock = stock.concat(centers[j]);
+              shuffle(stock);
+              centers[j] = [];
+            }
+            played = true;
+            break;
+          }
+        }
+        if (played) break;
+      }
     }
+
+    // Normal hand plays
+    if (!played) {
+      for (let h = 0; h < aiHand.length; h++) {
+        let card = aiHand[h];
+        for (let j = 0; j < 4; j++) {
+          let topB = topCard(centers[j]);
+          if (canPlayOn(card, topB)) {
+            let intended = getIntendedRank(card, topB);
+            let cardCopy = {rank: intended, suit: card.suit, color: card.color};
+            aiHand.splice(h, 1);
+            centers[j].push(cardCopy);
+            if (intended === 'Q') {
+              stock = stock.concat(centers[j]);
+              shuffle(stock);
+              centers[j] = [];
+            }
+            played = true;
+            break;
+          }
+        }
+        if (played) break;
+      }
+    }
+  }
+
+  // === Priority 3: Side stacks ===
+  if (!played) {
+    for (let s = 0; s < 4; s++) {
+      let card = topCard(aiSides[s]);
+      if (card) {
+        for (let j = 0; j < 4; j++) {
+          let topB = topCard(centers[j]);
+          if (canPlayOn(card, topB)) {
+            let intended = getIntendedRank(card, topB);
+            let cardCopy = {rank: intended, suit: card.suit, color: card.color};
+            aiSides[s].pop();
+            centers[j].push(cardCopy);
+            if (intended === 'Q') {
+              stock = stock.concat(centers[j]);
+              shuffle(stock);
+              centers[j] = [];
+            }
+            played = true;
+            break;
+          }
+        }
+        if (played) break;
+      }
+    }
+  }
+
+  // Refill hand after plays
+  if (aiHand.length === 0) {
+    while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
   }
 
   updateUI();
 
-  // Multiple plays from hand & side stacks
-  let movesMade = 0;
-  while (played && movesMade < 30) {
-    movesMade++;
-    played = false;
-
-    // Try hand
-    for (let h = 0; h < aiHand.length; h++) {
-      let card = aiHand[h];
-      for (let j = 0; j < 4; j++) {
-        let topB = topCard(centers[j]);
-        if (canPlayOn(card, topB)) {
-          let intended = getIntendedRank(card, topB);
-          let cardCopy = {rank: intended, suit: card.suit, color: card.color};
-          aiHand.splice(h, 1);
-          centers[j].push(cardCopy);
-          if (intended === 'Q') {
-  stock = stock.concat(centers[j]);
-  shuffle(stock);
-  centers[j] = [];
-}
-          if (intended === 'Q') {
-            stock = stock.concat(centers[j]);
-            shuffle(stock);
-            centers[j] = [];
-          }
-          played = true;
-          break;
-        }
-      }
-      if (played) break;
-    }
-
-    // Try side stacks
-    if (!played) {
-      for (let s = 0; s < 4; s++) {
-        let card = topCard(aiSides[s]);
-        if (card) {
-          for (let j = 0; j < 4; j++) {
-            let topB = topCard(centers[j]);
-            if (canPlayOn(card, topB)) {
-              let intended = getIntendedRank(card, topB);
-              let cardCopy = {rank: intended, suit: card.suit, color: card.color};
-              aiSides[s].pop();
-              centers[j].push(cardCopy);
-              if (intended === 'Q') {
-  stock = stock.concat(centers[j]);
-  shuffle(stock);
-  centers[j] = [];
-}
-              if (intended === 'Q') {
-                stock = stock.concat(centers[j]);
-                shuffle(stock);
-                centers[j] = [];
-              }
-              played = true;
-              break;
-            }
-          }
-          if (played) break;
-        }
-      }
-    }
-
-    // Refill after plays
-    if (aiHand.length === 0) {
-      while (aiHand.length < 5 && stock.length > 0) {
-        aiHand.push(stock.shift());
-      }
-    }
-
-    updateUI();
-  }
-
-  // FINAL FALLBACK: if NOTHING was played, discard one card if hand has any
-    // Priority 4: Discard — intelligent choice
+  // === Priority 4: Discard if nothing was played ===
   if (!played && aiHand.length > 0) {
-    var playerPayoffTop = topCard(playerPayoff);
-    var playerNeeded = playerPayoffTop ? RANKS[VALUE[playerPayoffTop.rank]] : null;
+    // Choose random non-King card if possible
+    let nonKingCards = aiHand.filter(c => c.rank !== 'K');
+    let discardCard = nonKingCards.length > 0 ? nonKingCards[0] : aiHand[0];
+    let discardIndex = aiHand.indexOf(discardCard);
 
-    var bestCard = null;
-    var bestScore = -Infinity;
-    var bestIndex = -1;
+    // Random side stack
+    let targetStack = Math.floor(Math.random() * 4);
 
-    for (var h = 0; h < aiHand.length; h++) {
-      var card = aiHand[h];
-
-      // Skip Kings unless it's the only card left
-      if (card.rank === 'K' && aiHand.length > 1) continue;
-
-      var score = 0;
-
-      // Spite bonus: card player could use next
-      if (playerNeeded && card.rank === playerNeeded) score += 30;
-      if (card.rank === 'K' && !playerPayoffTop) score += 20;
-
-      // Penalty for high-value cards (AI wants to keep them)
-      if (['K','Q','J','10'].includes(card.rank)) score -= 15;
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestCard = card;
-        bestIndex = h;
-      }
-    }
-
-    // Fallback: if no good spite target, discard lowest value card
-    if (!bestCard) {
-      bestCard = aiHand.reduce((prev, curr) => 
-        VALUE[prev.rank] < VALUE[curr.rank] ? prev : curr);
-      bestIndex = aiHand.indexOf(bestCard);
-    }
-
-    // FIXED: choose random side stack instead of always 0
-    var targetStack = Math.floor(Math.random() * 4);
-
-    aiSides[targetStack].push(bestCard);
-    aiHand.splice(bestIndex, 1);
+    aiSides[targetStack].push(discardCard);
+    aiHand.splice(discardIndex, 1);
     updateUI();
-    setStatus("AI discarded strategically to side stack");
+    setStatus("AI discarded to side stack (no legal play)");
   }
 
-  // End turn
   if (aiPayoff.length === 0) {
     setStatus("AI wins 😈", "#ff4444");
     return;
