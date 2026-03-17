@@ -118,7 +118,8 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-  var hasPlayedThisTurn = false;
+  var hasPlayedThisTurn = false; // still used for "must play at least one card" rule
+  var hasDiscardedThisTurn = false; // NEW: blocks multiple discards
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -165,9 +166,8 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks (tap hand card then tap any heap – ends turn)
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
-    var isDiscardMode = selected && selected.startsWith("hand-");
+    var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
@@ -177,14 +177,7 @@
       if (t) {
         inner.className = "card " + t.color;
         inner.textContent = cardDisplay(t);
-        inner.onclick = (function(idx){ 
-          return function(e) {
-            if (!isDiscardMode) {  // ← ONLY stop propagation when NOT discarding
-              e.stopPropagation();
-            }
-            selectCard("side", idx);
-          };
-        })(i);
+        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
         p.appendChild(inner);
       } else {
         inner.className = "card empty";
@@ -192,14 +185,14 @@
         p.appendChild(inner);
       }
 
-      if (isDiscardMode) {
+      if (canDiscard) {
         p.classList.add("highlight");
       }
 
-      p.onclick = (function(idx) {
-        return function() {
-          if (isDiscardMode) discardToSide(idx);
-        };
+      p.onclick = (function(idx){ 
+        return function(){ 
+          if (canDiscard) discardToSide(idx);
+        }; 
       })(i);
 
       sidesDiv.appendChild(p);
@@ -211,16 +204,16 @@
     if (selected === type + "-" + idx) { selected = null; updateUI(); setStatus("Selection cancelled"); return; }
     selected = type + "-" + idx;
     updateUI();
-    setStatus(type === "hand" ? "Tap center pile or side stack to discard & end turn" : "Tap center to play");  // FIXED: clearer message
+    setStatus(type === "hand" ? "Tap center pile or side stack to discard & end turn" : "Tap center to play");
   }
 
   function discardToSide(sideIdx) {
-    if (currentPlayer !== "player" || !selected || !selected.startsWith("hand-") || hasPlayedThisTurn) return;
+    if (currentPlayer !== "player" || !selected || !selected.startsWith("hand-") || hasDiscardedThisTurn) return;
     var handIdx = parseInt(selected.split('-')[1]);
     var card = playerHand[handIdx];
     playerSides[sideIdx].push(card);
     playerHand.splice(handIdx, 1);
-    hasPlayedThisTurn = true;
+    hasDiscardedThisTurn = true; // FIXED: block further discards
     selected = null;
     updateUI();
     setStatus("Discarded to side heap → turn ends");
@@ -274,6 +267,7 @@
     while (playerHand.length < 5 && stock.length > 0) playerHand.push(stock.shift());
     selected = null;
     hasPlayedThisTurn = false;
+    hasDiscardedThisTurn = false; // FIXED: reset for next turn
     updateUI();
 
     if (playerPayoff.length === 0) return;
@@ -308,6 +302,7 @@
     centers = [[],[],[],[]];
     selected = null;
     hasPlayedThisTurn = false;
+    hasDiscardedThisTurn = false;
     currentPlayer = playerHand.some(canStartCenter) ? "player" : "ai";
     updateUI();
     setStatus(currentPlayer === "player" ? "Your turn – must play at least one card" : "AI starts...");
