@@ -221,6 +221,7 @@
         p.classList.add("highlight");
       }
       p.onclick = (function(idx){
+        console.log("Pile clicked - discard attempted on stack", idx, "canDiscard:", canDiscard);
         return function(){
           if (canDiscard) {
             discardToSide(idx);
