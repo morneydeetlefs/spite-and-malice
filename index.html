@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Spite – Durban Rules (Fixed + Fanned Discards)</title>
+  <title>Spite – Durban Rules (Fixed)</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -22,26 +22,22 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .pile { 
-      width: 92px; 
-      height: 250px;              /* increased for fan space */
-      position: relative; 
-      cursor: pointer; 
-    }
+    .pile { width: 92px; height: 130px; position: relative; cursor: pointer; }
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
       background: #fff; color: #000; font-size: 24px; font-weight: bold;
       display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
-      padding: 6px; box-sizing: border-box; text-align: left;
-      position: absolute; left: 0; top: 0;   /* for fanning */
+      padding: 6px;
+      box-sizing: border-box;
+      text-align: left;
     }
     .card:active { transform: scale(1.08); }
     .card.red { color: #c00; }
     .card.black { color: #111; }
     .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 48px; justify-content: center; align-items: center; padding: 0; }
-    .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; justify-content: center; align-items: center; padding: 0; position: relative; }
+    .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; justify-content: center; align-items: center; padding: 0; }
     .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
     .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
     button {
@@ -72,13 +68,13 @@
 </div>
 
 <div class="section">
-  <h3>Your Hand (tap card → tap center or side stack)</h3>
-  <div id="player-hand" class="cards"></div>
+  <h3>Your Side Stacks (tap hand card then tap any heap – ends turn)</h3>
+  <div id="player-sides" class="cards"></div>
 </div>
 
 <div class="section">
-  <h3>Your Side Stacks (tap hand card then tap any heap – ends turn)</h3>
-  <div id="player-sides" class="cards"></div>
+  <h3>Your Hand (tap card → tap center or side stack)</h3>
+  <div id="player-hand" class="cards"></div>
 </div>
 
 <button id="new-game">New Game</button>
@@ -140,6 +136,7 @@
     document.getElementById("player-payoff").textContent = playerPayoff.length;
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
 
+    // Player payoff pile - show top card
     var playerPayoffDiv = document.getElementById("player-payoff-pile");
     playerPayoffDiv.innerHTML = '';
     var pp = topCard(playerPayoff);
@@ -152,6 +149,7 @@
     }
     playerPayoffDiv.appendChild(ppCard);
 
+    // AI payoff pile - show top card
     var aiPayoffDiv = document.getElementById("ai-payoff-pile");
     aiPayoffDiv.innerHTML = '';
     var ap = topCard(aiPayoff);
@@ -193,60 +191,44 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks – now fanned downward
+          // Side Stacks (tap hand card then tap any heap – ends turn)
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
-
-      if (pile.length === 0) {
-        var empty = document.createElement("div");
-        empty.className = "card empty";
-        empty.textContent = "-";
-        p.appendChild(empty);
+      var t = topCard(pile);
+      var inner = document.createElement("div");
+      if (t) {
+        inner.className = "card " + t.color;
+        inner.textContent = cardDisplay(t);
+        inner.onclick = (function(idx){
+          return function(e){
+            if (canDiscard) {
+              // FIXED: do nothing on inner card when discarding — let pile handle it
+              return;
+            }
+            e.stopPropagation();
+            selectCard("side", idx);
+          };
+        })(i);
+        p.appendChild(inner);
       } else {
-        // Fan downward: newest card at bottom (top=0), oldest at top
-        for (var k = pile.length - 1; k >= 0; k--) {
-          var c = pile[k];
-          var cardEl = document.createElement("div");
-          cardEl.className = "card " + c.color;
-          cardEl.textContent = cardDisplay(c);
-          cardEl.style.top = ((pile.length - 1 - k) * 18) + "px"; // 0 at bottom, older higher
-          cardEl.style.zIndex = k + 1; // top card highest
-
-          // Only top card is interactive for select/play
-          if (k === pile.length - 1) {
-            cardEl.onclick = (function(idx){
-              return function(e){
-                if (canDiscard) {
-                  // When discarding, skip inner select — let pile discard handler run
-                  return;
-                }
-                e.stopPropagation();
-                selectCard("side", idx);
-              };
-            })(i);
-
-            if (selected === "side-" + i) cardEl.classList.add("highlight");
-          }
-
-          p.appendChild(cardEl);
-        }
+        inner.className = "card empty";
+        inner.textContent = "-";
+        p.appendChild(inner);
       }
-
       if (canDiscard) {
         p.classList.add("highlight");
       }
-
       p.onclick = (function(idx){
         return function(){
+          console.log("Pile clicked - discard attempted on stack", idx, "canDiscard:", canDiscard);
           if (canDiscard) {
             discardToSide(idx);
           }
         };
       })(i);
-
       sidesDiv.appendChild(p);
     }
   }
