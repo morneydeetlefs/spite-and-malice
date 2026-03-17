@@ -107,6 +107,15 @@
     return (VALUE[played.rank]||0) === (VALUE[top.rank]||0) + 1;
   }
 
+  // NEW: Determine what rank the King becomes when played
+  function getIntendedRank(played, top) {
+    if (played.rank !== 'K') return played.rank;
+    if (!top) return 'A';
+    var nextVal = VALUE[top.rank] + 1;
+    if (nextVal > 12) return 'Q';
+    return RANKS[nextVal - 1];
+  }
+
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
@@ -220,7 +229,9 @@
       return;
     }
 
-    var cardCopy = { rank: card.rank, suit: card.suit, color: card.color };
+    // NEW: Change King to intended rank
+    var intendedRank = getIntendedRank(card, topCard(centers[i]));
+    var cardCopy = { rank: intendedRank, suit: card.suit, color: card.color };
 
     if (type === "hand") playerHand.splice(idx,1);
     else playerSides[idx].pop();
