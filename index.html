@@ -320,7 +320,7 @@
       handDiv.appendChild(cd);
     }
 
-    var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
+        var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
@@ -330,7 +330,15 @@
       if (t) {
         inner.className = "card " + t.color;
         inner.textContent = cardDisplay(t);
-        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
+        inner.onclick = (function(idx){
+          return function(e){
+            if (canDiscard) {
+              return;  // skip select — let pile handle discard
+            }
+            e.stopPropagation();
+            selectCard("side", idx);
+          };
+        })(i);
         p.appendChild(inner);
       } else {
         inner.className = "card empty";
@@ -342,7 +350,9 @@
       }
       p.onclick = (function(idx){
         return function(){
-          if (canDiscard) discardToSide(idx);
+          if (canDiscard) {
+            discardToSide(idx);
+          }
         };
       })(i);
       sidesDiv.appendChild(p);
