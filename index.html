@@ -45,37 +45,29 @@
   </style>
 </head>
 <body>
-
 <h1>Spite – Durban Rules</h1>
 <div id="status">Ready...</div>
-
 <div class="section">
   <h3>Opponent: <span id="ai-payoff">13</span> left</h3>
   <div class="cards"><div class="pile"><div class="card back">?</div></div></div>
 </div>
-
 <div class="section">
   <h3>Center Piles (A→Q • Kings wild)</h3>
   <div id="centers" class="cards"></div>
 </div>
-
 <div class="section">
   <h3>Your Payoff: <span id="player-payoff">13</span> left</h3>
   <div class="cards"><div id="player-payoff-pile" class="pile"></div></div>
 </div>
-
 <div class="section">
   <h3>Your Side Stacks (tap hand card then tap any heap – ends turn)</h3>
   <div id="player-sides" class="cards"></div>
 </div>
-
 <div class="section">
   <h3>Your Hand (tap card → tap center or side stack)</h3>
   <div id="player-hand" class="cards"></div>
 </div>
-
 <button id="new-game">New Game</button>
-
 <script>
   var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   var SUITS = ['♥','♦','♣','♠'];
@@ -133,7 +125,6 @@
     document.getElementById("player-payoff").textContent = playerPayoff.length;
     document.getElementById("ai-payoff").textContent = aiPayoff.length;
     document.getElementById("player-payoff-pile").innerHTML = playerPayoff.length > 0 ? '<div class="card back">' + playerPayoff.length + '</div>' : '<div class="card empty">WIN!</div>';
-
     var centersDiv = document.getElementById("centers"); centersDiv.innerHTML = '';
     var selCard = null;
     if (selected) {
@@ -154,7 +145,6 @@
       }
       centersDiv.appendChild(pileEl);
     }
-
     var handDiv = document.getElementById("player-hand"); handDiv.innerHTML = '';
     for (var i = 0; i < playerHand.length; i++) {
       var c = playerHand[i];
@@ -165,14 +155,12 @@
       if (selected === "hand-" + i) cd.classList.add("highlight");
       handDiv.appendChild(cd);
     }
-
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
       var t = topCard(pile);
-
       var inner = document.createElement("div");
       if (t) {
         inner.className = "card " + t.color;
@@ -184,17 +172,14 @@
         inner.textContent = "-";
         p.appendChild(inner);
       }
-
       if (canDiscard) {
         p.classList.add("highlight");
       }
-
-      p.onclick = (function(idx){ 
-        return function(){ 
+      p.onclick = (function(idx){
+        return function(){
           if (canDiscard) discardToSide(idx);
-        }; 
+        };
       })(i);
-
       sidesDiv.appendChild(p);
     }
   }
@@ -213,7 +198,7 @@
     var card = playerHand[handIdx];
     playerSides[sideIdx].push(card);
     playerHand.splice(handIdx, 1);
-    hasDiscardedThisTurn = true; // FIXED: block further discards
+    hasDiscardedThisTurn = true;
     selected = null;
     updateUI();
     setStatus("Discarded to side heap → turn ends");
@@ -229,10 +214,8 @@
       setStatus("Cannot play there", "#ff6666");
       return;
     }
-
     var intendedRank = getIntendedRank(card, topCard(centers[i]));
     var cardCopy = { rank: intendedRank, suit: card.suit, color: card.color };
-
     if (type === "hand") playerHand.splice(idx,1);
     else playerSides[idx].pop();
     centers[i].push(cardCopy);
@@ -241,7 +224,6 @@
     selected = null;
     updateUI();
     setStatus("Played " + cardDisplay(cardCopy));
-
     if (playerPayoff.length > 0) {
       var tp = topCard(playerPayoff);
       for (var j = 0; j < 4; j++) {
@@ -256,7 +238,6 @@
         }
       }
     }
-
     if (playerPayoff.length === 0) {
       setStatus("YOU WIN! 🎉", "#00ff00");
       return;
@@ -267,11 +248,9 @@
     while (playerHand.length < 5 && stock.length > 0) playerHand.push(stock.shift());
     selected = null;
     hasPlayedThisTurn = false;
-    hasDiscardedThisTurn = false; // FIXED: reset for next turn
+    hasDiscardedThisTurn = false;
     updateUI();
-
     if (playerPayoff.length === 0) return;
-
     currentPlayer = "ai";
     setStatus("AI thinking...");
     setTimeout(aiTurn, 700);
@@ -281,8 +260,21 @@
     var played = false;
     if (aiPayoff.length > 0) {
       var tp = topCard(aiPayoff);
-      for (var i = 0; i < 4; i++) if (canPlayOn(tp, topCard(centers[i]))) {
-        aiPayoff.pop(); centers[i].push({rank:tp.rank, suit:tp.suit, color:tp.color}); played = true; break;
+      for (var i = 0; i < 4; i++) {
+        var topB = topCard(centers[i]);
+        if (canPlayOn(tp, topB)) {
+          var intended = getIntendedRank(tp, topB); // FIXED: use intended rank for AI payoff Kings
+          var cardCopy = {rank: intended, suit: tp.suit, color: tp.color};
+          aiPayoff.pop();
+          centers[i].push(cardCopy);
+          if (intended === 'Q') {
+            stock = stock.concat(centers[i]);
+            shuffle(stock);
+            centers[i] = [];
+          }
+          played = true;
+          break;
+        }
       }
     }
     while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
