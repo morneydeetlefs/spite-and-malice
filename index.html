@@ -165,9 +165,9 @@
       handDiv.appendChild(cd);
     }
 
-    // Side Stacks - FIXED: allow discard after playing to centers
+    // Side Stacks (tap hand card then tap any heap – ends turn)
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
-    var isDiscardMode = selected && selected.startsWith("hand-");  // FIXED: removed !hasPlayedThisTurn
+    var isDiscardMode = selected && selected.startsWith("hand-");
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
@@ -177,7 +177,17 @@
       if (t) {
         inner.className = "card " + t.color;
         inner.textContent = cardDisplay(t);
-        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
+
+        // FIXED: only stop propagation when NOT discarding (i.e. when selecting/playing the card)
+        inner.onclick = (function(idx) {
+          return function(e) {
+            if (!isDiscardMode) {
+              e.stopPropagation();  // only stop when selecting/playing
+            }
+            selectCard("side", idx);
+          };
+        })(i);
+
         p.appendChild(inner);
       } else {
         inner.className = "card empty";
@@ -185,14 +195,14 @@
         p.appendChild(inner);
       }
 
-      if (isDiscardMode) {  // FIXED: highlight whenever hand card selected
+      if (isDiscardMode) {
         p.classList.add("highlight");
       }
 
-      p.onclick = (function(idx){ 
-        return function(){ 
-          if (isDiscardMode) discardToSide(idx);  // FIXED: discard when in mode
-        }; 
+      p.onclick = (function(idx) {
+        return function() {
+          if (isDiscardMode) discardToSide(idx);
+        };
       })(i);
 
       sidesDiv.appendChild(p);
