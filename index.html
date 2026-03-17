@@ -107,7 +107,6 @@
     return (VALUE[played.rank]||0) === (VALUE[top.rank]||0) + 1;
   }
 
-  // NEW: Determine what rank the King becomes when played
   function getIntendedRank(played, top) {
     if (played.rank !== 'K') return played.rank;
     if (!top) return 'A';
@@ -166,7 +165,9 @@
       handDiv.appendChild(cd);
     }
 
+    // Side Stacks - FIXED: allow discard after playing to centers
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
+    var isDiscardMode = selected && selected.startsWith("hand-");  // FIXED: removed !hasPlayedThisTurn
     for (var i = 0; i < 4; i++) {
       var pile = playerSides[i];
       var p = document.createElement("div"); p.className = "pile";
@@ -184,13 +185,13 @@
         p.appendChild(inner);
       }
 
-      if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) {
+      if (isDiscardMode) {  // FIXED: highlight whenever hand card selected
         p.classList.add("highlight");
       }
 
       p.onclick = (function(idx){ 
         return function(){ 
-          if (selected && selected.startsWith("hand-") && !hasPlayedThisTurn) discardToSide(idx); 
+          if (isDiscardMode) discardToSide(idx);  // FIXED: discard when in mode
         }; 
       })(i);
 
@@ -203,7 +204,7 @@
     if (selected === type + "-" + idx) { selected = null; updateUI(); setStatus("Selection cancelled"); return; }
     selected = type + "-" + idx;
     updateUI();
-    setStatus(type === "hand" ? "Tap center or side heap (side ends turn)" : "Tap center to play");
+    setStatus(type === "hand" ? "Tap center pile or side stack to discard & end turn" : "Tap center to play");  // FIXED: clearer message
   }
 
   function discardToSide(sideIdx) {
@@ -229,7 +230,6 @@
       return;
     }
 
-    // NEW: Change King to intended rank
     var intendedRank = getIntendedRank(card, topCard(centers[i]));
     var cardCopy = { rank: intendedRank, suit: card.suit, color: card.color };
 
