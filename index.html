@@ -411,6 +411,11 @@
     else if (type === "payoff") playerPayoff.pop();
     else playerSides[idx].pop();
     centers[i].push(cardCopy);
+    if (intendedRank === 'Q') {
+  stock = stock.concat(centers[i]);
+  shuffle(stock);
+  centers[i] = [];
+}
     if (centers[i].length >= 13) { stock = stock.concat(centers[i]); shuffle(stock); centers[i] = []; }
     hasPlayedThisTurn = true;
     selected = null;
@@ -456,6 +461,11 @@
         aiPayoff.pop();
         centers[i].push(cardCopy);
         if (intended === 'Q') {
+  stock = stock.concat(centers[j]);
+  shuffle(stock);
+  centers[j] = [];
+}
+        if (intended === 'Q') {
           stock = stock.concat(centers[i]);
           shuffle(stock);
           centers[i] = [];
@@ -492,6 +502,11 @@
           aiHand.splice(h, 1);
           centers[j].push(cardCopy);
           if (intended === 'Q') {
+  stock = stock.concat(centers[j]);
+  shuffle(stock);
+  centers[j] = [];
+}
+          if (intended === 'Q') {
             stock = stock.concat(centers[j]);
             shuffle(stock);
             centers[j] = [];
@@ -515,6 +530,11 @@
               let cardCopy = {rank: intended, suit: card.suit, color: card.color};
               aiSides[s].pop();
               centers[j].push(cardCopy);
+              if (intended === 'Q') {
+  stock = stock.concat(centers[j]);
+  shuffle(stock);
+  centers[j] = [];
+}
               if (intended === 'Q') {
                 stock = stock.concat(centers[j]);
                 shuffle(stock);
