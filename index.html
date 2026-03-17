@@ -22,19 +22,22 @@
     .section { width: 100%; max-width: 440px; margin: 12px 0; }
     h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
     .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .pile { width: 92px; height: 130px; position: relative; cursor: pointer; } /* tappable */
+    .pile { width: 92px; height: 130px; position: relative; cursor: pointer; }
     .card {
       width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
-      background: #fff; color: #000; font-size: 26px; font-weight: bold;
-      display: flex; align-items: center; justify-content: center;
+      background: #fff; color: #000; font-size: 24px; font-weight: bold;
+      display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
+      padding: 6px; /* space for corner text */
+      box-sizing: border-box;
+      text-align: left;
     }
-    .card:active { transform: scale(1.15); }
+    .card:active { transform: scale(1.08); }
     .card.red { color: #c00; }
     .card.black { color: #111; }
-    .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 48px; }
-    .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; }
+    .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 48px; justify-content: center; align-items: center; padding: 0; }
+    .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; justify-content: center; align-items: center; padding: 0; }
     .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
     .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
     button {
@@ -159,8 +162,8 @@
     var selCard = null;
     if (selected) {
       var parts = selected.split('-');
-      selCard = parts[0] === "hand" ? playerHand[parseInt(parts[1])] : topCard(playerSides[parseInt(parts[1])]);
-      if (parts[0] === "payoff") selCard = topCard(playerPayoff);
+      selCard = parts[0] === "hand" ? playerHand[parseInt(parts[1])] : 
+                parts[0] === "payoff" ? topCard(playerPayoff) : topCard(playerSides[parseInt(parts[1])]);
     }
     for (var i = 0; i < 4; i++) {
       var t = topCard(centers[i]);
@@ -259,7 +262,6 @@
     hasPlayedThisTurn = true;
     selected = null;
 
-    // Refill only if hand is now empty (and no discard yet)
     if (playerHand.length === 0 && !hasDiscardedThisTurn) {
       while (playerHand.length < 5 && stock.length > 0) {
         playerHand.push(stock.shift());
@@ -398,3 +400,5 @@
   newBtn.onclick = startGame;
   startGame();
 </script>
+</body>
+</html>
