@@ -68,6 +68,84 @@
   <div id="player-hand" class="cards"></div>
 </div>
 <button id="new-game">New Game</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Spite – Durban Rules (Fixed)</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0a211b;
+      color: #fff;
+      margin: 0;
+      padding: 10px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      touch-action: manipulation;
+    }
+    h1 { font-size: 1.9rem; margin: 8px 0 10px; color: #ffcc00; text-align: center; }
+    #status { font-size: 1.3rem; margin: 12px 0 18px; text-align: center; min-height: 1.8em; font-weight: bold; line-height: 1.4; }
+    .section { width: 100%; max-width: 440px; margin: 12px 0; }
+    h3 { margin: 6px 0 8px; text-align: center; font-size: 1.2rem; }
+    .cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    .pile { width: 92px; height: 130px; position: relative; }
+    .card {
+      width: 92px; height: 130px; border-radius: 12px; border: 3px solid #666;
+      background: #fff; color: #000; font-size: 26px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      user-select: none; transition: all 0.12s;
+    }
+    .card:active { transform: scale(1.15); }
+    .card.red { color: #c00; }
+    .card.black { color: #111; }
+    .card.back { background: linear-gradient(135deg, #003366, #0066cc); color: white; font-size: 48px; }
+    .card.empty { background: #334; color: #aaa; font-size: 15px; border-color: #555; }
+    .highlight { border-color: #ff0 !important; box-shadow: 0 0 25px #ff0 !important; transform: scale(1.08) !important; background: #fffa !important; }
+    .start-highlight .card.empty { background: #0f0 !important; color: black !important; border-color: #0f0 !important; box-shadow: 0 0 30px #0f0 !important; }
+    button {
+      width: 100%; max-width: 380px; margin: 16px auto; padding: 16px;
+      font-size: 1.3rem; font-weight: bold; border: none; border-radius: 12px;
+      background: #ff6600; color: white;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Spite – Durban Rules</h1>
+<div id="status">Ready...</div>
+
+<div class="section">
+  <h3>Opponent: <span id="ai-payoff">13</span> left</h3>
+  <div class="cards"><div class="pile"><div class="card back">?</div></div></div>
+</div>
+
+<div class="section">
+  <h3>Center Piles (A→Q • Kings wild)</h3>
+  <div id="centers" class="cards"></div>
+</div>
+
+<div class="section">
+  <h3>Your Payoff: <span id="player-payoff">13</span> left</h3>
+  <div class="cards"><div id="player-payoff-pile" class="pile"></div></div>
+</div>
+
+<div class="section">
+  <h3>Your Side Stacks (tap hand card then tap any heap – ends turn)</h3>
+  <div id="player-sides" class="cards"></div>
+</div>
+
+<div class="section">
+  <h3>Your Hand (tap card → tap center or side stack)</h3>
+  <div id="player-hand" class="cards"></div>
+</div>
+
+<button id="new-game">New Game</button>
+
 <script>
   var RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   var SUITS = ['♥','♦','♣','♠'];
@@ -225,39 +303,11 @@
     if (centers[i].length >= 13) { stock = stock.concat(centers[i]); shuffle(stock); centers[i] = []; }
     hasPlayedThisTurn = true;
     selected = null;
-
-    // NEW: only refill if hand is now empty (and no discard yet)
-    if (playerHand.length === 0 && !hasDiscardedThisTurn) {
-      while (playerHand.length < 5 && stock.length > 0) {
-        playerHand.push(stock.shift());
-      }
-    }
-
     updateUI();
     setStatus("Played " + cardDisplay(cardCopy));
 
-    if (playerPayoff.length > 0) {
-      var tp = topCard(playerPayoff);
-      for (var j = 0; j < 4; j++) {
-        if (canPlayOn(tp, topCard(centers[j]))) {
-          var tpCopy = { rank: tp.rank, suit: tp.suit, color: tp.color };
-          playerPayoff.pop();
-          centers[j].push(tpCopy);
-          if (centers[j].length >= 13) { stock = stock.concat(centers[j]); shuffle(stock); centers[j] = []; }
-
-          // NEW: only refill if hand is empty after auto-playoff
-          if (playerHand.length === 0 && !hasDiscardedThisTurn) {
-            while (playerHand.length < 5 && stock.length > 0) {
-              playerHand.push(stock.shift());
-            }
-          }
-
-          setStatus("Auto-played payoff " + cardDisplay(tpCopy));
-          updateUI();
-          break;
-        }
-      }
-    }
+    // REMOVED: no auto-play from payoff
+    // The player must now manually select the payoff card if they want to play it
 
     if (playerPayoff.length === 0) {
       setStatus("YOU WIN! 🎉", "#00ff00");
@@ -266,7 +316,6 @@
   }
 
   function endPlayerTurn() {
-    // Only refill at end of turn (normal case)
     while (playerHand.length < 5 && stock.length > 0) playerHand.push(stock.shift());
     selected = null;
     hasPlayedThisTurn = false;
@@ -300,14 +349,12 @@
       }
     }
 
-    // Refill AI hand only if it emptied during turn
     if (aiHand.length === 0) {
       while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
     }
 
     updateUI();
 
-    // AI can play multiple cards from hand/side in one turn
     var movesMade = 0;
     while (played && movesMade < 30) {
       movesMade++;
@@ -359,7 +406,6 @@
         }
       }
 
-      // Refill AI hand only if it emptied
       if (aiHand.length === 0) {
         while (aiHand.length < 5 && stock.length > 0) aiHand.push(stock.shift());
       }
