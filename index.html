@@ -29,7 +29,7 @@
       display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start;
       box-shadow: 0 4px 10px rgba(0,0,0,0.6);
       user-select: none; transition: all 0.12s;
-      padding: 6px; /* space for corner text */
+      padding: 6px;
       box-sizing: border-box;
       text-align: left;
     }
@@ -121,8 +121,8 @@
   function cardDisplay(c) { return c ? c.rank + c.suit : ''; }
 
   var stock, playerPayoff = [], aiPayoff = [], playerHand = [], playerSides = [[],[],[],[]], aiHand = [], aiSides = [[],[],[],[]], centers = [[],[],[],[]], currentPlayer = "player", selected = null;
-var hasPlayedThisTurn = false;
-var hasDiscardedThisTurn = false;
+  var hasPlayedThisTurn = false;
+  var hasDiscardedThisTurn = false;
 
   var statusEl = document.getElementById("status");
   var newBtn = document.getElementById("new-game");
@@ -208,6 +208,7 @@ var hasDiscardedThisTurn = false;
         inner.textContent = "-";
         p.appendChild(inner);
       }
+      // FIXED: highlight ALL 4 side stacks when ready to discard (empty or not)
       if (canDiscard) {
         p.classList.add("highlight");
       }
@@ -225,7 +226,7 @@ var hasDiscardedThisTurn = false;
     if (selected === type + "-" + idx) { selected = null; updateUI(); setStatus("Selection cancelled"); return; }
     selected = type + "-" + idx;
     updateUI();
-    setStatus(type === "hand" ? "Tap center pile or side stack to discard & end turn" :
+    setStatus(type === "hand" ? "Tap center pile or any side stack to discard & end turn" :
               type === "payoff" ? "Tap center pile to play payoff card" : "Tap center to play");
   }
 
