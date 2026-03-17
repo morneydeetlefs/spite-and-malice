@@ -191,6 +191,7 @@
       handDiv.appendChild(cd);
     }
 
+        // Side Stacks (tap hand card then tap any heap – ends turn)
     var sidesDiv = document.getElementById("player-sides"); sidesDiv.innerHTML = '';
     var canDiscard = selected && selected.startsWith("hand-") && !hasDiscardedThisTurn;
     for (var i = 0; i < 4; i++) {
@@ -201,20 +202,29 @@
       if (t) {
         inner.className = "card " + t.color;
         inner.textContent = cardDisplay(t);
-        inner.onclick = (function(idx){ return function(e){ e.stopPropagation(); selectCard("side", idx); }; })(i);
+        inner.onclick = (function(idx){
+          return function(e){
+            // FIXED: only stop propagation when NOT discarding
+            if (!canDiscard) {
+              e.stopPropagation();
+            }
+            selectCard("side", idx);
+          };
+        })(i);
         p.appendChild(inner);
       } else {
         inner.className = "card empty";
         inner.textContent = "-";
         p.appendChild(inner);
       }
-      // FIXED: highlight ALL 4 side stacks when ready to discard (empty or not)
       if (canDiscard) {
         p.classList.add("highlight");
       }
       p.onclick = (function(idx){
         return function(){
-          if (canDiscard) discardToSide(idx);
+          if (canDiscard) {
+            discardToSide(idx);
+          }
         };
       })(i);
       sidesDiv.appendChild(p);
